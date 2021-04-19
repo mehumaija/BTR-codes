@@ -3,7 +3,7 @@ const myEngine = newEngine();
 
 
 // from wikiData querying hormone that is a protein for test purposes
-/* query = `
+query = `
 PREFIX property: <http://www.wikidata.org/prop/direct/>
 PREFIX entity: <http://www.wikidata.org/entity/>
 SELECT ?item ?itemLabel
@@ -15,6 +15,7 @@ WHERE {
   }
 `
 
+
 // this is the query from the Comunica tutorial
 exampleQuery = `
 SELECT ?s ?p ?o
@@ -23,58 +24,51 @@ WHERE {
 	?s ?p ?o
 } LIMIT 100
 `
- */
+
 // execute SPARQL query. The first argument is the query String, 
 // the second argument is a query context (array of sources to query over)
-/* const result = await myEngine.query(exampleQuery, {
-	sources: [
-		'http://fragments.dbpedia.org/2015/en',
-	],
-}); */
 
-const result = (async()=> await myEngine.query(`
-  SELECT ?s ?p ?o WHERE {
-    ?s ?p <http://dbpedia.org/resource/Belgium>.
-    ?s ?p ?o
-  } LIMIT 100`, {
-  sources: ['http://fragments.dbpedia.org/2015/en'],
-}));
+sources = [];
+sources.push('http://fragments.dbpedia.org/2015/en');
+sources.push('https://www.rubensworks.net');
+sources.push('https://ruben.verborgh.org/profile/');
+
+const getResults = async function(query, sources) {
+
+    const result = await myEngine.query(query, {
+      sources: sources,
+    });
+
+    // data-listener
+    result.bindingsStream.on('data', (binding) => {
+    	console.log(binding.get('?s').value);
+    	console.log(binding.get('?s').termType);
+    	console.log(binding.get('?p').value);
+    	console.log(binding.get('?o').value);
+    });
+	
+	// end-listener
+    result.bindingStream.on('end', () => {
+	// data-listener not called anymore
+	});
+	
+	// error-listener
+    result.bindingsStream.on('error', (error) => {
+		console.error(error);
+	});
+}
+
+getResults(exampleQuery, sources);
 
 
-// more sources
-/* 		'https://www.rubensworks.net',
-		'https://ruben.verborgh.org/profile/', */
-		
-		
-
+// serializing to JSON
 /* const {data} = myEngine.resultToString(result,
 	'application/sparql-results+json');
 data.pipe(process.stdout); // print to standard output */
 
-// data-listener
-result.bindingsStream.on('data', (binding) => {
-	console.log(binding.get('?s').value);
-	console.log(binding.get('?s').termType);
-	console.log(binding.get('?p').value);
-	console.log(binding.get('?o').value);
-});
-
-// end-listener
-result.bindingStream.on('end', () => {
-	// data-listener not called anymore
-});
-
-// error-listener
-result.bindingsStream.on('error', (error) => {
-	console.error(error);
-});
 
 
 // getting results in a simple array, using asynchronous bindings() method
 /* const bindings = result.bndings();
-
 console.log(bindings[0].get('?s').value);
 console.log(bindings[0].get('?s').termType); */
-
-
-

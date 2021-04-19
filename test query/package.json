@@ -1,0 +1,11 @@
+{
+  "name": "thesis-test-query",
+  "version": "1.0.0",
+  "description": "test query from js app",
+  "main": "thesis_test_query.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Maija Utriainen",
+  "license": "ISC"
+}
