@@ -35,9 +35,7 @@ sources.push('https://ruben.verborgh.org/profile/');
 
 const getResults = async function(query, sources) {
 
-    const result = await myEngine.query(query, {
-      sources: sources,
-    });
+    const result = await myEngine.query(query, {sources: sources,});
 
     // data-listener
     result.bindingsStream.on('data', (binding) => {
