@@ -1,10 +1,23 @@
 <html>
+
+  <style>
+    #cy {
+      width: 300px;
+      height: 300px;
+      display: block;
+    }
+  </style>
+  
   <head>
     <title>Web Browser App for test purposes</title>
 	<!--Comunica-->
 	<script src="http://rdf.js.org/comunica-browser/versions/1/packages/actor-init-sparql/comunica-browser.js"></script>
-  </head>	
+	<!-- Cytoscape.js , this must be written in a more general form but I don't know can I put the cytoscape.min.js in another place?? -->
+	<script> src="C:\Program Files\nodejs\node_modules\cytoscape\dist\cytoscape.min.js" </script>
+  </head>
+  
   <body>
     <script src="hormoneQuery.js"></script>
   </body>
+     
 </html>
