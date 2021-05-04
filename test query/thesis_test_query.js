@@ -33,6 +33,7 @@ sources.push('http://fragments.dbpedia.org/2015/en');
 sources.push('https://www.rubensworks.net');
 sources.push('https://ruben.verborgh.org/profile/');
 
+
 const getResults = async function(query, sources) {
 
     const result = await myEngine.query(query, {sources: sources,});
@@ -54,15 +55,19 @@ const getResults = async function(query, sources) {
     result.bindingsStream.on('error', (error) => {
 		console.error(error);
 	});
+	
+	const {data} = myEngine.resultToString(result,
+		'application/json');
+	data.pipe(process.stdout); // print to standard output
+	
+	console.log(data);
 }
 
 getResults(exampleQuery, sources);
 
 
 // serializing to JSON
-/* const {data} = myEngine.resultToString(result,
-	'application/sparql-results+json');
-data.pipe(process.stdout); // print to standard output */
+
 
 
 
