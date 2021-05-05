@@ -9,15 +9,18 @@
   </style>
   
   <head>
-    <title>Web Browser App for test purposes</title>
+    <title>Web Browser App</title>
 	<!--Comunica-->
 	<script src="http://rdf.js.org/comunica-browser/versions/1/packages/actor-init-sparql/comunica-browser.js"></script>
 	<!-- Cytoscape.js , this must be written in a more general form but I don't know can I put the cytoscape.min.js in another place?? -->
 	<script src="cytoscape.min.js"></script>
+	<!-- JavaScript -->
+	<script src="hormoneQuery.js"></script>
   </head>
   
   <body>
-    <script src="hormoneQuery.js"></script>
+	<div id="cy"></div>
+	<script> drawNetwork(); </script>
   </body>
-     
+  
 </html>

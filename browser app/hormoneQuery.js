@@ -1,4 +1,3 @@
-
 const myEngine = Comunica.newEngine();
 
 // from wikidata
@@ -23,63 +22,93 @@ sources = [];
 sources.push('https://query.wikidata.org/sparql');
 //sources.push('https://api.nextprot.org/sparql');
 
-var dataJSON = {};
+var elementsList = [];
+
 
 myEngine.query(query1, {sources: sources,})
 	.then(function (result) {
     result.bindingsStream.on('data', function (data) {
         // Each variable binding is an RDFJS term
-        console.log(data.get('?item').value);
+		itemValue = data.get('?item').value
+        console.log(itemValue);
+		
+		// for each data item (one identifier from wikidata) create an object {data: {id: "url"}}
+		elementsList.push({data: {id: itemValue}});
     });
-			
-	dataJSON = myEngine.resultToString(result, 'application/json');
 });
 
+console.log(elementsList);
 
-console.log(dataJSON);
+
+var dataJSON = {};
+
+// to serialize the data while executing query 
+async function fetchJson() {
+
+    const results = await myEngine.query(query1, {sources: sources,});
+
+    const data = await myEngine.resultToString(results,
+      'application/sparql-results+json', results.context);
+
+    data.data.on('data', (a) => {
+        dataJSON += a
+    })
+
+    data.data.on('end', () => {
+    console.log(dataJSON)
+    })
+}
+
+
 
 // this is for cytoscape.js
 
-/* var cy = cytoscape({ // variable cy is the graph?
+ function drawNetwork() { 
+ 
+	var cy = cytoscape({ // variable cy is the graph?
 
-  container: document.getElementById('cy'), // container to render in
+	  container: document.getElementById('cy'), // container to render in, plot appears here
 
-  elements: [ // list of graph elements to start with
-    { // node a
-      data: { id: 'a' }
-    },
-    { // node b
-      data: { id: 'b' }
-    },
-    { // edge ab
-      data: { id: 'ab', source: 'a', target: 'b' }
-    }
-  ],
+	  elements: elementsList,
 
-  style: [ // the stylesheet for the graph
-    {
-      selector: 'node',
-      style: {
-        'background-color': '#666',
-        'label': 'data(id)'
-      }
-    },
+	  style: [ // the stylesheet for the graph
+		{
+		  selector: 'node',
+		  style: {
+			'background-color': '#666',
+			'label': 'data(id)'
+		  }
+		},
 
-    {
-      selector: 'edge',
-      style: {
-        'width': 3,
-        'line-color': '#ccc',
-        'target-arrow-color': '#ccc',
-        'target-arrow-shape': 'triangle',
-        'curve-style': 'bezier'
-      }
-    }
-  ],
+		{
+		  selector: 'edge',
+		  style: {
+			'width': 3,
+			'line-color': '#ccc',
+			'target-arrow-color': '#ccc',
+			'target-arrow-shape': 'triangle',
+			'curve-style': 'bezier'
+		  }
+		}
+	  ],
 
-  layout: {
-    name: 'grid',
-    rows: 1
-  }
+	  layout: {
+		name: 'grid',
+		rows: 1
+	  }
 
-}); */
+	}); 
+}
+
+
+ /* [ // list of graph elements to start with
+		{ // node a
+		  data: { id: 'a' }
+		},
+		{ // node b
+		  data: { id: 'b' }
+		},
+		{ // edge ab
+		  data: { id: 'ab', source: 'a', target: 'b' }
+		}
+	  ] */

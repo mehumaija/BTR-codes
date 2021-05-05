@@ -66,10 +66,6 @@ const getResults = async function(query, sources) {
 getResults(exampleQuery, sources);
 
 
-// serializing to JSON
-
-
-
 
 // getting results in a simple array, using asynchronous bindings() method
 /* const bindings = result.bndings();
