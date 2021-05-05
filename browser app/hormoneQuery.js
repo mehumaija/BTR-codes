@@ -1,4 +1,8 @@
+// in this class, the queries and their sources, and functions, are defined.
+
 const myEngine = Comunica.newEngine();
+var elementsList = [];
+var dataJSON = {};
 
 // from wikidata
 query1 = `
@@ -22,25 +26,28 @@ sources = [];
 sources.push('https://query.wikidata.org/sparql');
 //sources.push('https://api.nextprot.org/sparql');
 
-var elementsList = [];
 
+function fetchResults() {
+	myEngine.query(query1, {sources: sources,})
+		.then(function (result) {
+		result.bindingsStream.on('data', function (data) {
+			// Each variable binding is an RDFJS term
+			itemValue = data.get('?item').value
+			console.log(itemValue);
+			
+			// for each data item (one identifier from wikidata) create an object {data: {id: "url"}}, take the beginning of the url out and leave only the wikidata identifier
+			elementsList.push({data: {id: itemValue}});
+			
+			//draws an edge between two nodes
+			if (elementsList.length > 0) {
+				// edge item {data: { id: 'ab', source: 'a', target: 'b' }}
+			}
+			
+			drawNetwork();
+		});
+	});
+}
 
-myEngine.query(query1, {sources: sources,})
-	.then(function (result) {
-    result.bindingsStream.on('data', function (data) {
-        // Each variable binding is an RDFJS term
-		itemValue = data.get('?item').value
-        console.log(itemValue);
-		
-		// for each data item (one identifier from wikidata) create an object {data: {id: "url"}}
-		elementsList.push({data: {id: itemValue}});
-    });
-});
-
-console.log(elementsList);
-
-
-var dataJSON = {};
 
 // to serialize the data while executing query 
 async function fetchJson() {
@@ -60,10 +67,10 @@ async function fetchJson() {
 }
 
 
-
 // this is for cytoscape.js
-
  function drawNetwork() { 
+ 
+	console.log("Drawing network.");
  
 	var cy = cytoscape({ // variable cy is the graph?
 
@@ -99,16 +106,3 @@ async function fetchJson() {
 
 	}); 
 }
-
-
- /* [ // list of graph elements to start with
-		{ // node a
-		  data: { id: 'a' }
-		},
-		{ // node b
-		  data: { id: 'b' }
-		},
-		{ // edge ab
-		  data: { id: 'ab', source: 'a', target: 'b' }
-		}
-	  ] */
