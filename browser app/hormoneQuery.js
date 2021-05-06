@@ -4,6 +4,8 @@ const myEngine = Comunica.newEngine();
 var elementsList = [];
 var dataJSON = {};
 
+// QUERIES
+
 // from wikidata
 query1 = `
 PREFIX wdp: <http://www.wikidata.org/prop/direct/>
@@ -21,14 +23,31 @@ select distinct ?entry where {
   ?entry :isoform /:medical / :term /:related / :childOf cv:D002318.
 }
 `
+
+//nextprot: Proteins that interact with protein RBM17 and that are involved in splicing
+query3 = `
+PREFIX : <http://nextprot.org/rdf#>
+PREFIX entry: <http://nextprot.org/rdf/entry/>
+PREFIX cv: <http://nextprot.org/rdf/terminology/>
+select distinct ?entry where {
+  entry:NX_Q96I25 :isoform / :interaction / :interactant ?entry.
+  ?entry :isoform / :keyword / :term cv:KW-0508
+}
+`
+
+// SOURCES
 	  
 sources = [];
-sources.push('https://query.wikidata.org/sparql');
-//sources.push('https://api.nextprot.org/sparql');
+//sources.push('https://query.wikidata.org/sparql');
+sources.push('https://www.nextprot.org/proteins/search?mode=advanced');
 
 
+// FUNCTIONS
+
+//conducting the query and drawing the nodes inside of it
 function fetchResults() {
-	myEngine.query(query1, {sources: sources,})
+	
+	myEngine.query(query3, {sources: sources,}) // only need to change the query and sources variables if want to alter the query
 		.then(function (result) {
 		result.bindingsStream.on('data', function (data) {
 			// Each variable binding is an RDFJS term
@@ -70,8 +89,7 @@ async function fetchJson() {
 // this is for cytoscape.js
  function drawNetwork() { 
  
-	console.log("Drawing network.");
- 
+	console.log("Drawing network");
 	var cy = cytoscape({ // variable cy is the graph?
 
 	  container: document.getElementById('cy'), // container to render in, plot appears here
