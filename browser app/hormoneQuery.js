@@ -39,7 +39,9 @@ select distinct ?entry where {
 	  
 sources = [];
 //sources.push('https://query.wikidata.org/sparql');
-sources.push('https://www.nextprot.org/proteins/search?mode=advanced');
+//sources.push('https://www.nextprot.org/proteins/search?mode=advanced');
+//sources.push('https://api.nextprot.org/sparql');
+sources.push('https://sparql.nextprot.org/');
 
 
 // FUNCTIONS
@@ -71,7 +73,7 @@ function fetchResults() {
 // to serialize the data while executing query 
 async function fetchJson() {
 
-    const results = await myEngine.query(query1, {sources: sources,});
+    const results = await myEngine.query(query3, {sources: sources,});
 
     const data = await myEngine.resultToString(results,
       'application/sparql-results+json', results.context);
