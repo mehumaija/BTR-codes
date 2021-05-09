@@ -26,6 +26,7 @@ select distinct ?entry where {
 `
 
 //nextprot: Proteins that interact with protein RBM17 and that are involved in splicing
+// i took # away from prefix http://nextprot.org/rdf#
 query3 = `
 PREFIX : <http://nextprot.org/rdf>
 PREFIX entry: <http://nextprot.org/rdf/entry/>
@@ -55,19 +56,21 @@ WHERE {
 }
 `
 
-//Bio2RDF standard query for testing
+// basic query
 query5 = `
-select * where {[] a ?Concept} LIMIT 100
+SELECT DISTINCT * WHERE {
+  ?s ?p ?o
+}
+LIMIT 10
 `
-
 
 // SOURCES
 	  
 sources = [];
-sources.push('https://query.wikidata.org/sparql'); // 0 wikidata SPARQL endpoint
-sources.push('https://api.nextprot.org/sparql'); // 1 this SHOULD be the right one for nextprot
+sources.push("https://query.wikidata.org/sparql"); // 0 wikidata SPARQL endpoint
+sources.push("https://api.nextprot.org/sparql"); // 1 this SHOULD be the right one for nextprot
 sources.push("http://sparql.wikipathways.org/sparql"); // 2 wikipathways
-sources.push('https://bio2rdf.org/sparql'); // 3 bio2RDF
+sources.push("https://bio2rdf.org/sparql"); // 3 bio2RDF
 
 
 // FUNCTIONS
@@ -85,7 +88,11 @@ async function fetchJson() {
 			// put the visualization and data processing neede dfor that inside this function
 			console.log(response);
 			
+			//add nodes
 			response.forEach(item => elementsList.push({data: {id: item["entry"]}}));
+			
+			//add edges
+			elementsList.push({data: { id: "edge", source: elementsList[0]["data"]["id"], target: elementsList[1]["data"]["id"]}});
 			
 			drawNetwork();
 			
