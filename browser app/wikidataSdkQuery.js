@@ -1,11 +1,5 @@
 // in this class, the queries and their sources, and functions, are defined.
 
-/* const WBK = require('wikibase-sdk')
-const wbk = WBK({
-  instance: 'https://my-wikibase-instan.se',
-  sparqlEndpoint: 'https://query.my-wikibase-instan.se/sparql'
-}) */
-
 var elementsList = [];
 var dataJSON = {};
 
@@ -33,7 +27,7 @@ select distinct ?entry where {
 
 //nextprot: Proteins that interact with protein RBM17 and that are involved in splicing
 query3 = `
-PREFIX : <http://nextprot.org/rdf#>
+PREFIX : <http://nextprot.org/rdf>
 PREFIX entry: <http://nextprot.org/rdf/entry/>
 PREFIX cv: <http://nextprot.org/rdf/terminology/>
 select distinct ?entry where {
@@ -70,10 +64,10 @@ select * where {[] a ?Concept} LIMIT 100
 // SOURCES
 	  
 sources = [];
-sources.push('https://query.wikidata.org/sparql'); // wikidata SPARQL endpoint
-sources.push('https://api.nextprot.org/sparql'); // this SHOULD be the right one for nextprot
-sources.push("http://sparql.wikipathways.org/sparql"); // wikipathways
-sources.push('https://bio2rdf.org/sparql'); // bio2RDF
+sources.push('https://query.wikidata.org/sparql'); // 0 wikidata SPARQL endpoint
+sources.push('https://api.nextprot.org/sparql'); // 1 this SHOULD be the right one for nextprot
+sources.push("http://sparql.wikipathways.org/sparql"); // 2 wikipathways
+sources.push('https://bio2rdf.org/sparql'); // 3 bio2RDF
 
 
 // FUNCTIONS
