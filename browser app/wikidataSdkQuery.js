@@ -78,29 +78,6 @@ sources.push('https://bio2rdf.org/sparql'); // bio2RDF
 
 // FUNCTIONS
 
-//conducting the query and drawing the nodes inside of it
-function fetchResults() {
-
-	myEngine.query(query5, {sources: sources,}) // only need to change the query and sources variables if want to alter the query
-		.then(function (result) {
-		result.bindingsStream.on('data', function (data) {
-			// Each variable binding is an RDFJS term
-			itemValue = data.get('?entry').value
-			console.log(itemValue);
-			
-			// for each data item (one identifier from wikidata) create an object {data: {id: "url"}}, take the beginning of the url out and leave only the wikidata identifier
-			elementsList.push({data: {id: itemValue}});
-			
-			//draws an edge between two nodes
-			if (elementsList.length > 0) {
-				// edge item {data: { id: 'ab', source: 'a', target: 'b' }}
-			}
-			
-			drawNetwork();
-		});
-	});
-}
-
 
 // to serialize the data while executing query 
 async function fetchJson() {
@@ -112,8 +89,12 @@ async function fetchJson() {
 		.then(wdk.simplify.sparqlResults)
 		.then(function (response) {
 			// put the visualization and data processing neede dfor that inside this function
-			
 			console.log(response);
+			
+			response.forEach(item => elementsList.push({data: {id: item["entry"]}}));
+			
+			drawNetwork();
+			
 		});
 			
 }
