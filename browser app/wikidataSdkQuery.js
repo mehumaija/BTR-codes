@@ -1,7 +1,6 @@
 // in this class, the queries and their sources, and functions, are defined.
 
 var elementsList = [];
-var dataJSON = {};
 
 // QUERIES
 
@@ -87,13 +86,19 @@ async function fetchJson() {
 		.then(function (response) {
 			// put the visualization and data processing neede dfor that inside this function
 			console.log(response);
+			//var nodeElements = [];
+			//var edgeElements = [];
 			
 			//add nodes
-			response.forEach(item => elementsList.push({data: {id: item["entry"]}}));
+			/*each node will contain information on what other nodes it is connected to. Maybe in a form of a list. Then edges are formed accordingly.
+			the information about the connections is retrieved from the queries*/
+			response.forEach(item => elementsList.push({data: {id: item["entry"], connections: ["serotonin receptor", "GABA-A"]}}));
 			
 			//add edges
+			/* go through all the elements in nodeElements, read what is in connections of each node. Make edges accordingly and push to edgeElements. */
 			elementsList.push({data: { id: "edge", source: elementsList[0]["data"]["id"], target: elementsList[1]["data"]["id"]}});
 			
+			//elementsList = nodeElements.concat(edgeElements);
 			drawNetwork();
 			
 		});
