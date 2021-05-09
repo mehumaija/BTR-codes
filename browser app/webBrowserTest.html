@@ -10,17 +10,22 @@
   
   <head>
     <title>Web Browser App</title>
-	<!--Comunica-->
-	<script src="http://rdf.js.org/comunica-browser/versions/1/packages/actor-init-sparql/comunica-browser.js"></script>
+	<!-- Initialize a global WBK function, wikidata for fetch  -->
+	<script src="https://cdn.rawgit.com/maxlath/wikidata-sdk/dist/dist/wikibase-sdk.min.js"></script>
+	<!-- Initialize a global wdk object using the WBK object, wikidata -->
+	<script src="https://cdn.rawgit.com/maxlath/wikidata-sdk/dist/dist/wikidata-sdk.min.js"></script>
 	<!-- Cytoscape.js , this must be written in a more general form but I don't know can I put the cytoscape.min.js in another place?? -->
 	<script src="cytoscape.min.js"></script>
 	<!-- JavaScript -->
-	<script src="hormoneQuery.js"></script>
+	<script src="wikidataSdkQuery.js"></script>
+	
+	<!--Comunica-->
+	<!-- <script src="http://rdf.js.org/comunica-browser/versions/1/packages/actor-init-sparql/comunica-browser.js"></script> -->
   </head>
   
   <body>
 	<div id="cy"></div>
-	<script> fetchResults(); console.log(elementsList); </script>
+	<script> fetchJson(); </script>
   </body>
   
 </html>

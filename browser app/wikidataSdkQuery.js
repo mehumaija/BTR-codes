@@ -1,6 +1,11 @@
 // in this class, the queries and their sources, and functions, are defined.
 
-const myEngine = Comunica.newEngine();
+/* const WBK = require('wikibase-sdk')
+const wbk = WBK({
+  instance: 'https://my-wikibase-instan.se',
+  sparqlEndpoint: 'https://query.my-wikibase-instan.se/sparql'
+}) */
+
 var elementsList = [];
 var dataJSON = {};
 
@@ -12,7 +17,7 @@ PREFIX wdp: <http://www.wikidata.org/prop/direct/>
 PREFIX wd: <http://www.wikidata.org/entity/>
 SELECT ?entry
 WHERE {
-  ?entry wdp:P2868 wde:Q11364
+  ?entry wdp:P2868 wd:Q11364
   }
 `
 
@@ -65,12 +70,10 @@ select * where {[] a ?Concept} LIMIT 100
 // SOURCES
 	  
 sources = [];
-//sources.push('https://query.wikidata.org/sparql');
-//sources.push('https://www.nextprot.org/proteins/search?mode=advanced');
-//sources.push('https://api.nextprot.org/sparql'); // THIS should be the right one for nextprot
-//sources.push('https://sparql.nextprot.org/');
-//sources.push("http://sparql.wikipathways.org/sparql");
-sources.push('https://bio2rdf.org/sparql');
+sources.push('https://query.wikidata.org/sparql'); // wikidata SPARQL endpoint
+sources.push('https://api.nextprot.org/sparql'); // this SHOULD be the right one for nextprot
+sources.push("http://sparql.wikipathways.org/sparql"); // wikipathways
+sources.push('https://bio2rdf.org/sparql'); // bio2RDF
 
 
 // FUNCTIONS
@@ -102,18 +105,17 @@ function fetchResults() {
 // to serialize the data while executing query 
 async function fetchJson() {
 
-    const results = await myEngine.query(query3, {sources: sources,});
-
-    const data = await myEngine.resultToString(results,
-      'application/sparql-results+json', results.context);
-
-    data.data.on('data', (a) => {
-        dataJSON += a
-    })
-
-    data.data.on('end', () => {
-    console.log(dataJSON)
-    })
+	var queryUrl = encodeURI(sources[0] + "?query=" + query1); // encode query on the url provided
+	
+	fetch(queryUrl, {headers: {"Accept": 'application/json'}})
+		.then(response => response.json())
+		.then(wdk.simplify.sparqlResults)
+		.then(function (response) {
+			// put the visualization and data processing neede dfor that inside this function
+			
+			console.log(response);
+		});
+			
 }
 
 
