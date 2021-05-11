@@ -12,7 +12,7 @@ PREFIX wdp: <http://www.wikidata.org/prop/direct/>
 PREFIX wd: <http://www.wikidata.org/entity/>
 SELECT ?entry
 WHERE {
-  ?entry wdp:P2868 wde:Q11364
+  ?entry wdp:P2868 wd:Q11364
   }
 `
 
@@ -56,29 +56,30 @@ WHERE {
 }
 `
 
-//Bio2RDF standard query for testing
+// basic query
 query5 = `
-select * where {[] a ?Concept} LIMIT 100
+SELECT DISTINCT * WHERE {
+  ?s ?p ?o
+}
+LIMIT 10
 `
 
 
 // SOURCES
 	  
 sources = [];
-//sources.push('https://query.wikidata.org/sparql');
-//sources.push('https://www.nextprot.org/proteins/search?mode=advanced');
-//sources.push('https://api.nextprot.org/sparql'); // THIS should be the right one for nextprot
-//sources.push('https://sparql.nextprot.org/');
-//sources.push("http://sparql.wikipathways.org/sparql");
-sources.push('https://bio2rdf.org/sparql');
+//sources.push("https://query.wikidata.org/sparql"); // 0 wikidata SPARQL endpoint
+sources.push({type: "sparql", value: "https://api.nextprot.org/sparql"}); // 1 this SHOULD be the right one for nextprot
+//sources.push("http://sparql.wikipathways.org/sparql"); // 2 wikipathways
+//sources.push("https://bio2rdf.org/sparql"); // 3 bio2RDF
 
 
 // FUNCTIONS
 
 //conducting the query and drawing the nodes inside of it
-function fetchResults() {
+async function fetchResults() {
 
-	myEngine.query(query5, {sources: sources,}) // only need to change the query and sources variables if want to alter the query
+	myEngine.query(query3, {sources: sources,}) // only need to change the query and sources variables if want to alter the query
 		.then(function (result) {
 		result.bindingsStream.on('data', function (data) {
 			// Each variable binding is an RDFJS term
@@ -86,13 +87,13 @@ function fetchResults() {
 			console.log(itemValue);
 			
 			// for each data item (one identifier from wikidata) create an object {data: {id: "url"}}, take the beginning of the url out and leave only the wikidata identifier
-			elementsList.push({data: {id: itemValue}});
+			elementsList.push({data: {id: itemValue, connections: ["serotonin receptor", "GABA-A"]}});
 			
 			//draws an edge between two nodes
-			if (elementsList.length > 0) {
-				// edge item {data: { id: 'ab', source: 'a', target: 'b' }}
+             /*if (elementsList.length > 2) {
+				elementsList.push({data: { id: "edge", source: elementsList[elementsList.length]["data"]["id"], target: elementsList[elementsList.length - 1]["data"]["id"]}});
 			}
-			
+			 */
 			drawNetwork();
 		});
 	});
