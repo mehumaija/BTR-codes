@@ -134,10 +134,14 @@ async function fetchResults() {
 			sourceValue = data.get('?protein1').value;
 			targetValue = data.get('?protein2').value;
 			console.log(interactionValue + ' ' + sourceValue + ' ' + targetValue);
-			
-			// for each data item (one identifier from wikidata) create an object {data: {id: "url"}}, take the beginning of the url out and leave only the wikidata identifier
-			elementsList.push({data: {id: sourceValue}});
-			elementsList.push({data: {id: targetValue}});
+
+			if (!elementsList.includes(sourceValue)) {
+				elementsList.push({data: {id: sourceValue}});
+			}
+			if (!elementsList.includes(targetValue)) {
+				elementsList.push({data: {id: targetValue}});
+			}
+			// make an if-statement to get distinct edges or use the information about having multiple similar edges for weighting?
 			elementsList.push({data: { id: sourceValue + targetValue, source: sourceValue, target: targetValue}});
 			
 		    drawNetwork();
