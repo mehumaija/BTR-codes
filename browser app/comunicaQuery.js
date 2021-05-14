@@ -102,12 +102,15 @@ WHERE {
 
 //replace O43189 with a relevant protein for example GABA-A or serotonin receptor, something estrogen related or inflammation related or ECM related... .. .
 query8 = `
-SELECT ?interaction ?protein2
-WHERE { 
+PREFIX up: <http://purl.uniprot.org/core/>
+PREFIX uniprotkb: <http://purl.uniprot.org/uniprot/>
+SELECT ?interaction ?protein1 ?protein2
+WHERE {
+  BIND("http://purl.uniprot.org/uniprot/O43189" AS ?protein1)
   uniprotkb:O43189 up:interaction ?interaction.
   ?protein2 a up:Protein;
             up:interaction ?interaction.
-} LIMIT 30
+} LIMIT 100
 `
 
 
@@ -126,7 +129,7 @@ sources.push({type: "sparql", value: "https://sparql.uniprot.org/sparql"});
 //conducting the query and drawing the nodes inside of it
 async function fetchResults() {
 
-	myEngine.query(query7, {sources: sources,}) // only need to change the query and sources variables if want to alter the query
+	myEngine.query(query8, {sources: sources,}) // only need to change the query and sources variables if want to alter the query
 		.then(function (result) {
 		result.bindingsStream.on('data', function (data) {
 			// Each variable binding is an RDFJS term
