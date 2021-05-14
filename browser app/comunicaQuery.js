@@ -31,13 +31,25 @@ query3 = `
 PREFIX : <http://nextprot.org/rdf#>
 PREFIX entry: <http://nextprot.org/rdf/entry/>
 PREFIX cv: <http://nextprot.org/rdf/terminology/>
-select distinct ?entry where {
+select distinct entry:NX_Q96I25 ?entry where {
   entry:NX_Q96I25 :isoform / :interaction / :interactant ?entry.
   ?entry :isoform / :keyword / :term cv:KW-0508
 }
 `
 
+query31 = `
+PREFIX : <http://nextprot.org/rdf#>
+PREFIX entry: <http://nextprot.org/rdf/entry/>
+PREFIX cv: <http://nextprot.org/rdf/terminology/>
+select distinct ?protein1 ?protein2 where {
+  ?protein1 :isoform / :interaction / :interactant ?protein2.
+  ?protein2 :isoform / :keyword / :term cv:KW-0508
+}
+`
+
 //wikipathways: interactions of a pathway
+/* the ?interaction variable gives a unique URL for each interaction. For example ComplexBinding/a9b99 means the binding of SMAD1 and SMAD4 into a complex. 
+Thus, both of the nodes get this as their ?interaction.*/
 query4 = `
 PREFIX wp:      <http://vocabularies.wikipathways.org/wp#>
 PREFIX dc:      <http://purl.org/dc/elements/1.1/> 
@@ -64,14 +76,49 @@ SELECT DISTINCT * WHERE {
 LIMIT 10
 `
 
+//uniprot interaction queries
+/*VOCABULARY 
+Classes: up:Interaction, up:Participant
+Properties: up:interaction, up:participant*/
+query6 = `
+SELECT ?interaction ?participant1 ?participant2
+WHERE { 
+  ?interaction a up:Interaction;
+               up:participant ?participant1;
+               up:participant ?participant2.
+} LIMIT 30
+` //WORKS
+
+query7 = `
+PREFIX up: <http://purl.uniprot.org/core/>
+SELECT ?interaction ?protein1 ?protein2
+WHERE { 
+  ?protein1 a up:Protein;
+           up:interaction ?interaction.
+  ?protein2 a up:Protein;
+            up:interaction ?interaction.
+} LIMIT 100
+` //WORKS
+
+//replace O43189 with a relevant protein for example GABA-A or serotonin receptor, something estrogen related or inflammation related or ECM related... .. .
+query8 = `
+SELECT ?interaction ?protein2
+WHERE { 
+  uniprotkb:O43189 up:interaction ?interaction.
+  ?protein2 a up:Protein;
+            up:interaction ?interaction.
+} LIMIT 30
+`
+
 
 // SOURCES
 	  
 sources = [];
 //sources.push("https://query.wikidata.org/sparql"); // 0 wikidata SPARQL endpoint
-sources.push({type: "sparql", value: "https://api.nextprot.org/sparql"}); // 1 this SHOULD be the right one for nextprot
-//sources.push("http://sparql.wikipathways.org/sparql"); // 2 wikipathways
+//sources.push({type: "sparql", value: "https://api.nextprot.org/sparql"}); // 1 this SHOULD be the right one for nextprot
+//sources.push({type: "sparql", value: "http://sparql.wikipathways.org/sparql"}); // 2 wikipathways
 //sources.push("https://bio2rdf.org/sparql"); // 3 bio2RDF
+sources.push({type: "sparql", value: "https://sparql.uniprot.org/sparql"});
 
 
 // FUNCTIONS
@@ -79,22 +126,21 @@ sources.push({type: "sparql", value: "https://api.nextprot.org/sparql"}); // 1 t
 //conducting the query and drawing the nodes inside of it
 async function fetchResults() {
 
-	myEngine.query(query3, {sources: sources,}) // only need to change the query and sources variables if want to alter the query
+	myEngine.query(query7, {sources: sources,}) // only need to change the query and sources variables if want to alter the query
 		.then(function (result) {
 		result.bindingsStream.on('data', function (data) {
 			// Each variable binding is an RDFJS term
-			itemValue = data.get('?entry').value
-			console.log(itemValue);
+			interactionValue = data.get('?interaction').value;
+			sourceValue = data.get('?protein1').value;
+			targetValue = data.get('?protein2').value;
+			console.log(interactionValue + ' ' + sourceValue + ' ' + targetValue);
 			
 			// for each data item (one identifier from wikidata) create an object {data: {id: "url"}}, take the beginning of the url out and leave only the wikidata identifier
-			elementsList.push({data: {id: itemValue, connections: ["serotonin receptor", "GABA-A"]}});
+			elementsList.push({data: {id: sourceValue}});
+			elementsList.push({data: {id: targetValue}});
+			elementsList.push({data: { id: sourceValue + targetValue, source: sourceValue, target: targetValue}});
 			
-			//draws an edge between two nodes
-             /*if (elementsList.length > 2) {
-				elementsList.push({data: { id: "edge", source: elementsList[elementsList.length]["data"]["id"], target: elementsList[elementsList.length - 1]["data"]["id"]}});
-			}
-			 */
-			drawNetwork();
+		    drawNetwork();
 		});
 	});
 }
