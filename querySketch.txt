@@ -1,0 +1,228 @@
+//sketch queries
+
+SELECT ?protein
+WHERE {
+	?MDDpathway is MDDpathway.
+	?PMDDpathway is PMDDpathway.
+	?protein isPartOf ?MDDpathway;
+			 isPartOf ?PMDDpathway.
+}
+
+
+
+SELECT ?protein
+WHERE {
+	?MDDpathway is MDDpathway.
+	?PMDDpathway is PMDDpathway.
+	?GABApathway is GABApathway.
+	?cortisolPathway is cortisolPathway.
+	?protein isPartOf ?MDDpathway;
+			 isPartOf ?PMDDpathway;
+			 interactsWith memberOf ?GABApathway;
+			 interactsWith ?cortisolPathway.
+			 
+}
+
+
+// NEXTPROT 
+
+//take serotonin receptor isoforms and the biological processes that the isoforms participate
+select ?isoform ?GOlabel
+where {
+  entry:NX_P46098 :isoform ?isoform.
+  ?isoform :goBiologicalProcess ?GO.
+  ?GO :term ?GOterm.
+  ?GOterm rdfs:label ?GOlabel.
+} LIMIT 50
+
+
+//all the protein isoforms that are related to ovulation cycle
+SELECT ?iso ?GOlabel
+WHERE {
+  ?protein :isoform ?iso.
+  ?iso :goBiologicalProcess ?GO.
+  ?GO :term ?GOterm.
+  ?GOterm :childOf cv:GO_0042698;
+          rdfs:label ?GOlabel.
+} LIMIT 20
+
+
+//all isoforms related to GABA receptor activity
+SELECT ?iso ?GOlabel
+WHERE {
+  ?protein :isoform ?iso.
+  ?iso :goMolecularFunction ?GO.
+  ?GO :term ?GOterm.
+  ?GOterm :childOf cv:GO_0016917;
+          rdfs:label ?GOlabel.
+} LIMIT 20
+
+
+//protein isoforms related to serotonin receptor signalling 
+SELECT ?iso ?GOlabel
+WHERE {
+  ?protein :isoform ?iso.
+  ?iso :goBiologicalProcess ?GO.
+  ?GO :term ?GOterm.
+  ?GOterm :childOf cv:GO_0007210;
+          rdfs:label ?GOlabel.
+} LIMIT 20
+
+
+//pathways of protein isoforms. print the name of the pathway and unipathway id
+SELECT ?iso ?comment ?unipathway
+WHERE {
+    ?protein :isoform ?iso.
+	?iso :pathway ?pathway.
+	?pathway rdfs:comment ?comment;
+  			:term ?unipathway.
+} LIMIT 20
+
+
+//protein isoforms involved in ovulation cycle and GABA receptor activity
+SELECT ?iso ?GOlabel ?GOmolLabel
+WHERE {
+  ?protein :isoform ?iso.
+  ?iso :goBiologicalProcess ?GO.
+  ?GO :term ?GOterm.
+  ?GOterm :childOf cv:GO_0042698;
+          rdfs:label ?GOlabel.
+  ?iso :goMolecularFunction ?GOmol.
+  ?GOmol :term ?GOmolterm.
+  ?GOmolterm :childOf cv:GO_0016917;
+          rdfs:label ?GOmollabel.
+}
+
+//protein isoforms that are involved in MDD
+SELECT ?iso ?diseaseTerm ?diseaseLabel
+WHERE {
+    ?protein :isoform ?iso.
+	?iso :disease ?disease.
+	?disease :term cv:DI-00697;
+	         rdfs:comment ?diseaseLabel.
+} LIMIT 20
+
+
+
+
+//trying to link depression C2982 to some disease
+SELECT ?disease
+WHERE {
+	?disease :evidence ?evidence.
+	?evidence :experimentalContext ?expcontext.
+	?expcontext :disease cv:C2982.
+} LIMIT 20
+
+
+//give all the biological processes serotonin receptor is involved in
+select ?isoform ?GO ?processLabel
+where {
+  entry:NX_P46098 :isoform ?isoform.
+  ?isoform :goBiologicalProcess ?GO.
+  ?GO rdfs:comment ?processLabel.
+} LIMIT 50
+
+
+
+
+process related to progesterone https://www.ebi.ac.uk/QuickGO/searchterms/progesterone ; nextProt https://snorql.nextprot.org/help/entity/GoBiologicalProcess
+ovulation cycle https://www.ebi.ac.uk/QuickGO/term/GO:0042698
+Periodic fever, menstrual cycle-dependent https://www.nextprot.org/term/DI-03472/ (not the name I am looking for but could be a subclass of PMDD)
+MDD, https://www.nextprot.org/term/608516/ https://www.nextprot.org/term/DI-00697/
+depression https://www.nextprot.org/term/C2982/
+4-aminobutanoate biosynthesis https://www.nextprot.org/term/UPA00247/
+4-aminobutanoate metabolism https://www.nextprot.org/term/UPA00732/
+4-aminobutanoate degradation https://www.nextprot.org/term/UPA00733/
+GABA receptor activity https://www.ebi.ac.uk/QuickGO/term/GO:0016917
+GABA secretion https://www.ebi.ac.uk/QuickGO/term/GO:0014051
+serotonin receptor signalling pathway https://www.ebi.ac.uk/QuickGO/term/GO:0007210
+serotonin receptor activity https://www.ebi.ac.uk/QuickGO/term/GO:0099589
+response to progesterone (process) https://www.ebi.ac.uk/QuickGO/term/GO:0032570
+
+
+can I say: all the biological processes progesterone AND estrogen is involved in
+then: all the biological processes 
+
+
+//UNIPROT
+
+
+//pathways and their labels
+SELECT ?pathway ?pathwayLabel
+WHERE {
+  ?pathway a up:Pathway;
+           rdfs:label ?pathwayLabel.
+}
+
+//gives proteins and pathway they are involved in
+SELECT  ?protein ?annotation
+WHERE {
+  ?annotation a up:Pathway_Annotation.
+  ?protein up:annotation ?annotation.
+} LIMIT 10
+
+
+//pathways related to the specific protein
+SELECT  ?protein ?annotation
+WHERE {
+  ?annotation a up:Pathway_Annotation.
+  uniprotkb:W5WZ00 up:annotation ?annotation.
+} LIMIT 10
+
+
+//diseases related to a protein
+SELECT  ?protein ?disease
+WHERE {
+  ?annotation a up:Disease_Annotation.
+  ?protein up:annotation ?annotation.
+  ?annotation up:disease ?disease.
+} LIMIT 10
+
+
+MDD https://www.uniprot.org/diseases/DI-00697
+
+
+
+//BIO2RDF for some reason none of these queries work when I write down sources
+
+
+
+http://www.biopax.org/release/biopax-level3.owl#Pathway
+
+KEGG
+KEGG pathway [kegg_vocabulary:Pathway] http://bio2rdf.org/kegg_vocabulary:Pathway
+ko_pathway [kegg_vocabulary:ko_pathway] http://bio2rdf.org/kegg_vocabulary:ko_pathway
+pathway [kegg_vocabulary:pathway] http://bio2rdf.org/kegg_vocabulary:pathway
+pathway_map [kegg_vocabulary:pathway_map] http://bio2rdf.org/kegg_vocabulary:pathway_map
+
+Disease MDD https://www.genome.jp/entry/H01646
+Network steroid hormone biosynthesis (progesterone and cortisol) https://www.genome.jp/entry/N00338 
+
+
+// genes associated with Major Depressive Disorder, doesn't work
+PREFIX kegg: <http://bio2rdf.org/kegg:>
+PREFIX keggvocab: <http://bio2rdf.org/kegg_vocabulary:>
+SELECT ?gene
+WHERE {
+    kegg:H01646 keggvocab:gene ?gene.
+} LIMIT 10
+
+
+
+Affymetrix
+pathway [affymetrix_vocabulary:pathway] http://bio2rdf.org/affymetrix_vocabulary:pathway
+
+
+
+Pathway commons
+
+http://www.biopax.org/release/biopax-level3.owl#Pathway  http://www.biopax.org/release/biopax-level3.owl#pathwayComponent 
+http://www.biopax.org/release/biopax-level3.owl#Interaction
+http://www.biopax.org/release/biopax-level3.owl#ComplexAssembly
+
+PREFIX biopax: <http://www.biopax.org/release/biopax-level3.owl#>
+SELECT ?pathway
+WHERE {
+    ?pathway a biopax:Pathway;
+	         biopax:pathwayComponent ?component.
+} LIMIT 10
