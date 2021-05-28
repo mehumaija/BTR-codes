@@ -27,12 +27,21 @@ WHERE {
 // NEXTPROT 
 
 //take serotonin receptor isoforms and the biological processes that the isoforms participate
+//NOTE : this query gives all the GO terms not the processes ... --> rather use the query below
 select ?isoform ?GOlabel
 where {
   entry:NX_P46098 :isoform ?isoform.
   ?isoform :goBiologicalProcess ?GO.
   ?GO :term ?GOterm.
   ?GOterm rdfs:label ?GOlabel.
+} LIMIT 50
+
+//give all the biological processes serotonin receptor is involved in
+select ?isoform ?GO ?processLabel
+where {
+  entry:NX_P46098 :isoform ?isoform.
+  ?isoform :goBiologicalProcess ?GO.
+  ?GO rdfs:comment ?processLabel.
 } LIMIT 50
 
 
@@ -44,7 +53,18 @@ WHERE {
   ?GO :term ?GOterm.
   ?GOterm :childOf cv:GO_0042698;
           rdfs:label ?GOlabel.
-} LIMIT 20
+}
+
+//all the protein isoforms related to response to progesterone
+SELECT ?iso ?GOlabel
+WHERE {
+  ?protein :isoform ?iso.
+  ?iso :goBiologicalProcess ?GO.
+  ?GO :term ?GOterm.
+  ?GOterm :childOf cv:GO_0032570;
+          rdfs:label ?GOlabel.
+}
+
 
 
 //all isoforms related to GABA receptor activity
@@ -55,8 +75,7 @@ WHERE {
   ?GO :term ?GOterm.
   ?GOterm :childOf cv:GO_0016917;
           rdfs:label ?GOlabel.
-} LIMIT 20
-
+}
 
 //protein isoforms related to serotonin receptor signalling 
 SELECT ?iso ?GOlabel
@@ -68,6 +87,17 @@ WHERE {
           rdfs:label ?GOlabel.
 } LIMIT 20
 
+//isoforms related to serotonin receptor activity
+SELECT ?iso ?GOlabel
+WHERE {
+  ?protein :isoform ?iso.
+  ?iso :goMolecularFunction ?GO.
+  ?GO :term ?GOterm.
+  ?GOterm :childOf cv:GO_0099589;
+          rdfs:label ?GOlabel.
+}
+
+//isoforms related to ser
 
 //pathways of protein isoforms. print the name of the pathway and unipathway id
 SELECT ?iso ?comment ?unipathway
@@ -100,12 +130,20 @@ WHERE {
 	?iso :disease ?disease.
 	?disease :term cv:DI-00697;
 	         rdfs:comment ?diseaseLabel.
-} LIMIT 20
+}
 
 
+//isoforms that are invoolved in periodic fever || CAN I USE THIS??
+SELECT ?iso ?diseaseTerm ?diseaseLabel
+WHERE {
+    ?protein :isoform ?iso.
+	?iso :disease ?disease.
+	?disease :term cv:DI-03472;
+	         rdfs:comment ?diseaseLabel.
+}
 
 
-//trying to link depression C2982 to some disease
+//trying to link depression C2982 to some disease || NO RESULTS
 SELECT ?disease
 WHERE {
 	?disease :evidence ?evidence.
@@ -114,20 +152,11 @@ WHERE {
 } LIMIT 20
 
 
-//give all the biological processes serotonin receptor is involved in
-select ?isoform ?GO ?processLabel
-where {
-  entry:NX_P46098 :isoform ?isoform.
-  ?isoform :goBiologicalProcess ?GO.
-  ?GO rdfs:comment ?processLabel.
-} LIMIT 50
-
-
 
 
 process related to progesterone https://www.ebi.ac.uk/QuickGO/searchterms/progesterone ; nextProt https://snorql.nextprot.org/help/entity/GoBiologicalProcess
 ovulation cycle https://www.ebi.ac.uk/QuickGO/term/GO:0042698
-Periodic fever, menstrual cycle-dependent https://www.nextprot.org/term/DI-03472/ (not the name I am looking for but could be a subclass of PMDD)
+Periodic fever, menstrual cycle-dependent https://www.nextprot.org/term/DI-03472/ (not the name I am looking for but could be a subclass of PMDD) --> research this and see if could be compared
 MDD, https://www.nextprot.org/term/608516/ https://www.nextprot.org/term/DI-00697/
 depression https://www.nextprot.org/term/C2982/
 4-aminobutanoate biosynthesis https://www.nextprot.org/term/UPA00247/
@@ -178,6 +207,28 @@ WHERE {
   ?annotation up:disease ?disease.
 } LIMIT 10
 
+//proteins involved in disease called Major Depressive Disorder. Be sure to use the right prefix for disease:
+PREFIX up: <http://purl.uniprot.org/core/>
+PREFIX disease: <http://purl.uniprot.org/diseases/>
+SELECT  ?protein ?disease
+WHERE {
+  ?annotation a up:Disease_Annotation.
+  ?protein up:annotation ?annotation.
+  ?annotation up:disease disease:697.
+} LIMIT 10
+
+//proteins involved in a disease and the disease annotation
+SELECT ?protein ?disease ?annotation
+WHERE {
+  ?disease a up:Disease.
+  ?annotation a up:Disease_Annotation.
+  ?protein up:annotation ?annotation.
+  ?annotation up:disease ?disease.
+} LIMIT 10
+
+
+//
+
 
 MDD https://www.uniprot.org/diseases/DI-00697
 
@@ -219,6 +270,8 @@ Pathway commons
 http://www.biopax.org/release/biopax-level3.owl#Pathway  http://www.biopax.org/release/biopax-level3.owl#pathwayComponent 
 http://www.biopax.org/release/biopax-level3.owl#Interaction
 http://www.biopax.org/release/biopax-level3.owl#ComplexAssembly
+Steroid hormone biosynthesis https://apps.pathwaycommons.org/pathways?uri=http%3A%2F%2Fidentifiers.org%2Fkegg.pathway%2Fhsa00140
+
 
 PREFIX biopax: <http://www.biopax.org/release/biopax-level3.owl#>
 SELECT ?pathway
