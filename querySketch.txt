@@ -42,7 +42,7 @@ where {
   entry:NX_P46098 :isoform ?isoform.
   ?isoform :goBiologicalProcess ?GO.
   ?GO rdfs:comment ?processLabel.
-} LIMIT 50
+}
 
 
 //all the protein isoforms that are related to ovulation cycle
@@ -63,6 +63,25 @@ WHERE {
   ?GO :term ?GOterm.
   ?GOterm :childOf cv:GO_0032570;
           rdfs:label ?GOlabel.
+}
+
+//all the protein isoforms related to ovulation cycle or(/and?) response to progesterone
+PREFIX : <http://nextprot.org/rdf#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX cv: <http://nextprot.org/rdf/terminology/>
+SELECT DISTINCT ?iso ?GOlabel
+WHERE {
+  {?protein :isoform ?iso.
+  ?iso :goBiologicalProcess ?GO.
+  ?GO :term ?GOterm.
+  ?GOterm :childOf cv:GO_0042698;
+          rdfs:label ?GOlabel.}
+		UNION
+  {?protein :isoform ?iso.
+  ?iso :goBiologicalProcess ?GO.
+  ?GO :term ?GOterm.
+  ?GOterm :childOf cv:GO_0032570;
+          rdfs:label ?GOlabel.}
 }
 
 
@@ -97,7 +116,6 @@ WHERE {
           rdfs:label ?GOlabel.
 }
 
-//isoforms related to ser
 
 //pathways of protein isoforms. print the name of the pathway and unipathway id
 SELECT ?iso ?comment ?unipathway
@@ -107,6 +125,16 @@ WHERE {
 	?pathway rdfs:comment ?comment;
   			:term ?unipathway.
 } LIMIT 20
+
+//all isoforms related to response to stress
+SELECT ?iso ?GOlabel
+WHERE {
+  ?protein :isoform ?iso.
+  ?iso :goBiologicalProcess ?GO.
+  ?GO :term ?GOterm.
+  ?GOterm :childOf cv:GO_0006950;
+          rdfs:label ?GOlabel.
+}
 
 
 //protein isoforms involved in ovulation cycle and GABA receptor activity
@@ -167,6 +195,7 @@ GABA secretion https://www.ebi.ac.uk/QuickGO/term/GO:0014051
 serotonin receptor signalling pathway https://www.ebi.ac.uk/QuickGO/term/GO:0007210
 serotonin receptor activity https://www.ebi.ac.uk/QuickGO/term/GO:0099589
 response to progesterone (process) https://www.ebi.ac.uk/QuickGO/term/GO:0032570
+response to stress https://www.ebi.ac.uk/QuickGO/term/GO:0006950
 
 
 can I say: all the biological processes progesterone AND estrogen is involved in
@@ -215,7 +244,7 @@ WHERE {
   ?annotation a up:Disease_Annotation.
   ?protein up:annotation ?annotation.
   ?annotation up:disease disease:697.
-} LIMIT 10
+}
 
 //proteins involved in a disease and the disease annotation
 SELECT ?protein ?disease ?annotation
@@ -248,9 +277,10 @@ pathway_map [kegg_vocabulary:pathway_map] http://bio2rdf.org/kegg_vocabulary:pat
 
 Disease MDD https://www.genome.jp/entry/H01646
 Network steroid hormone biosynthesis (progesterone and cortisol) https://www.genome.jp/entry/N00338 
+Estrogen signalling pathway https://www.kegg.jp/kegg-bin/highlight_pathway?scale=1.0&map=map04915&keyword=estrogen
 
 
-// genes associated with Major Depressive Disorder, doesn't work
+// genes associated with Major Depressive Disorder, doesn't work because the identifier for MDD is old
 PREFIX kegg: <http://bio2rdf.org/kegg:>
 PREFIX keggvocab: <http://bio2rdf.org/kegg_vocabulary:>
 SELECT ?gene
@@ -279,3 +309,10 @@ WHERE {
     ?pathway a biopax:Pathway;
 	         biopax:pathwayComponent ?component.
 } LIMIT 10
+
+
+
+Interaction Reference Index
+
+// has PPIs and UniProt reference
+
