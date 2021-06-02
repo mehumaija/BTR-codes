@@ -24,25 +24,97 @@ WHERE {
 }
 
 
+
+
 // NEXTPROT 
 
-//take serotonin receptor isoforms and the biological processes that the isoforms participate
-//NOTE : this query gives all the GO terms not the processes ... --> rather use the query below
-select ?isoform ?GOlabel
-where {
-  entry:NX_P46098 :isoform ?isoform.
-  ?isoform :goBiologicalProcess ?GO.
-  ?GO :term ?GOterm.
-  ?GOterm rdfs:label ?GOlabel.
-} LIMIT 50
 
-//give all the biological processes serotonin receptor is involved in
-select ?isoform ?GO ?processLabel
-where {
-  entry:NX_P46098 :isoform ?isoform.
-  ?isoform :goBiologicalProcess ?GO.
-  ?GO rdfs:comment ?processLabel.
+
+
+//Depression queries 
+
+//isoforms that are related to GABA receptor activity and serotonin receptor signaling and serotonin receptor activity and MDD
+SELECT DISTINCT ?iso
+WHERE {
+  {?protein :isoform ?iso.
+  ?iso :goMolecularFunction ?GO.
+  ?GO :term ?GOterm.
+  ?GOterm :childOf cv:GO_0016917;
+          rdfs:label ?GOlabel.}
+		  UNION
+  {?protein :isoform ?iso.
+  ?iso :goBiologicalProcess ?GO.
+  ?GO :term ?GOterm.
+  ?GOterm :childOf cv:GO_0007210;
+          rdfs:label ?GOlabel.}
+		  UNION
+  {?protein :isoform ?iso.
+  ?iso :goMolecularFunction ?GO.
+  ?GO :term ?GOterm.
+  ?GOterm :childOf cv:GO_0099589;
+          rdfs:label ?GOlabel.}
+		  UNION
+  {?protein :isoform ?iso.
+  ?iso :disease ?disease.
+  ?disease :term cv:DI-00697;
+	      rdfs:comment ?diseaseLabel.}
 }
+
+
+
+//all isoforms related to GABA receptor activity
+SELECT ?iso ?GOlabel
+WHERE {
+  ?protein :isoform ?iso.
+  ?iso :goMolecularFunction ?GO.
+  ?GO :term ?GOterm.
+  ?GOterm :childOf cv:GO_0016917;
+          rdfs:label ?GOlabel.
+}
+
+//protein isoforms related to serotonin receptor signalling 
+SELECT ?iso ?GOlabel
+WHERE {
+  ?protein :isoform ?iso.
+  ?iso :goBiologicalProcess ?GO.
+  ?GO :term ?GOterm.
+  ?GOterm :childOf cv:GO_0007210;
+          rdfs:label ?GOlabel.
+}
+
+//isoforms related to serotonin receptor activity
+SELECT ?iso ?GOlabel
+WHERE {
+  ?protein :isoform ?iso.
+  ?iso :goMolecularFunction ?GO.
+  ?GO :term ?GOterm.
+  ?GOterm :childOf cv:GO_0099589;
+          rdfs:label ?GOlabel.
+}
+
+//all isoforms related to response to stress
+SELECT ?iso ?GOlabel
+WHERE {
+  ?protein :isoform ?iso.
+  ?iso :goBiologicalProcess ?GO.
+  ?GO :term ?GOterm.
+  ?GOterm :childOf cv:GO_0006950;
+          rdfs:label ?GOlabel.
+}
+
+//protein isoforms that are involved in MDD
+SELECT ?iso ?diseaseTerm ?diseaseLabel
+WHERE {
+    ?protein :isoform ?iso.
+	?iso :disease ?disease.
+	?disease :term cv:DI-00697;
+	         rdfs:comment ?diseaseLabel.
+}
+
+
+
+//Period queries
+
 
 
 //all the protein isoforms that are related to ovulation cycle
@@ -86,36 +158,25 @@ WHERE {
 
 
 
-//all isoforms related to GABA receptor activity
-SELECT ?iso ?GOlabel
-WHERE {
-  ?protein :isoform ?iso.
-  ?iso :goMolecularFunction ?GO.
+//Others
+
+//take serotonin receptor isoforms and the biological processes that the isoforms participate
+//NOTE : this query gives all the GO terms not the processes ... --> rather use the query below
+select ?isoform ?GOlabel
+where {
+  entry:NX_P46098 :isoform ?isoform.
+  ?isoform :goBiologicalProcess ?GO.
   ?GO :term ?GOterm.
-  ?GOterm :childOf cv:GO_0016917;
-          rdfs:label ?GOlabel.
+  ?GOterm rdfs:label ?GOlabel.
+} LIMIT 50
+
+//give all the biological processes serotonin receptor is involved in
+select ?isoform ?GO ?processLabel
+where {
+  entry:NX_P46098 :isoform ?isoform.
+  ?isoform :goBiologicalProcess ?GO.
+  ?GO rdfs:comment ?processLabel.
 }
-
-//protein isoforms related to serotonin receptor signalling 
-SELECT ?iso ?GOlabel
-WHERE {
-  ?protein :isoform ?iso.
-  ?iso :goBiologicalProcess ?GO.
-  ?GO :term ?GOterm.
-  ?GOterm :childOf cv:GO_0007210;
-          rdfs:label ?GOlabel.
-} LIMIT 20
-
-//isoforms related to serotonin receptor activity
-SELECT ?iso ?GOlabel
-WHERE {
-  ?protein :isoform ?iso.
-  ?iso :goMolecularFunction ?GO.
-  ?GO :term ?GOterm.
-  ?GOterm :childOf cv:GO_0099589;
-          rdfs:label ?GOlabel.
-}
-
 
 //pathways of protein isoforms. print the name of the pathway and unipathway id
 SELECT ?iso ?comment ?unipathway
@@ -125,17 +186,6 @@ WHERE {
 	?pathway rdfs:comment ?comment;
   			:term ?unipathway.
 } LIMIT 20
-
-//all isoforms related to response to stress
-SELECT ?iso ?GOlabel
-WHERE {
-  ?protein :isoform ?iso.
-  ?iso :goBiologicalProcess ?GO.
-  ?GO :term ?GOterm.
-  ?GOterm :childOf cv:GO_0006950;
-          rdfs:label ?GOlabel.
-}
-
 
 //protein isoforms involved in ovulation cycle and GABA receptor activity
 SELECT ?iso ?GOlabel ?GOmolLabel
@@ -151,16 +201,6 @@ WHERE {
           rdfs:label ?GOmollabel.
 }
 
-//protein isoforms that are involved in MDD
-SELECT ?iso ?diseaseTerm ?diseaseLabel
-WHERE {
-    ?protein :isoform ?iso.
-	?iso :disease ?disease.
-	?disease :term cv:DI-00697;
-	         rdfs:comment ?diseaseLabel.
-}
-
-
 //isoforms that are invoolved in periodic fever || CAN I USE THIS??
 SELECT ?iso ?diseaseTerm ?diseaseLabel
 WHERE {
@@ -169,7 +209,6 @@ WHERE {
 	?disease :term cv:DI-03472;
 	         rdfs:comment ?diseaseLabel.
 }
-
 
 //trying to link depression C2982 to some disease || NO RESULTS
 SELECT ?disease
@@ -202,7 +241,17 @@ can I say: all the biological processes progesterone AND estrogen is involved in
 then: all the biological processes 
 
 
+
+
+
+
+
+
+
+
 //UNIPROT
+
+
 
 
 //pathways and their labels
@@ -263,7 +312,14 @@ MDD https://www.uniprot.org/diseases/DI-00697
 
 
 
+
+
+
+
+
 //BIO2RDF for some reason none of these queries work when I write down sources
+
+
 
 
 

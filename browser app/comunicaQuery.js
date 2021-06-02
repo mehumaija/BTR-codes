@@ -26,14 +26,13 @@ select distinct ?entry where {
 }
 `
 
-//nextprot: Proteins that interact with protein RBM17 and that are involved in splicing
+//nextprot: Proteins that interact with protein RBM17
 query3 = `
 PREFIX : <http://nextprot.org/rdf#>
 PREFIX entry: <http://nextprot.org/rdf/entry/>
 PREFIX cv: <http://nextprot.org/rdf/terminology/>
 select distinct entry:NX_Q96I25 ?entry where {
   entry:NX_Q96I25 :isoform / :interaction / :interactant ?entry.
-  ?entry :isoform / :keyword / :term cv:KW-0508
 }
 `
 
@@ -77,9 +76,6 @@ LIMIT 10
 `
 
 //uniprot interaction queries
-/*VOCABULARY 
-Classes: up:Interaction, up:Participant
-Properties: up:interaction, up:participant*/
 query6 = `
 SELECT ?interaction ?participant1 ?participant2
 WHERE { 
@@ -88,6 +84,19 @@ WHERE {
                up:participant ?participant2.
 } LIMIT 30
 ` //WORKS
+
+//5-hydroxytryptamine receptor 2C,P28335 in uniprot
+query61 = `
+PREFIX up: <http://purl.uniprot.org/core/>
+PREFIX intact: <http://purl.uniprot.org/intact/>
+SELECT ?interaction ?protein1 ?protein2
+WHERE {
+  BIND("http://purl.uniprot.org/intact/EBI-994141" AS ?protein1)
+  ?interaction a up:Interaction;
+               up:participant intact:EBI-994141;
+               up:participant ?protein2.
+} LIMIT 100
+`
 
 query7 = `
 PREFIX up: <http://purl.uniprot.org/core/>
@@ -98,7 +107,7 @@ WHERE {
   ?protein2 a up:Protein;
             up:interaction ?interaction.
 } LIMIT 100
-` //WORKS
+`
 
 //replace O43189 with a relevant protein for example GABA-A or serotonin receptor, something estrogen related or inflammation related or ECM related... .. .
 query8 = `
@@ -106,22 +115,133 @@ PREFIX up: <http://purl.uniprot.org/core/>
 PREFIX uniprotkb: <http://purl.uniprot.org/uniprot/>
 SELECT ?interaction ?protein1 ?protein2
 WHERE {
-  BIND("http://purl.uniprot.org/uniprot/O43189" AS ?protein1)
-  uniprotkb:O43189 up:interaction ?interaction.
+  BIND("http://purl.uniprot.org/uniprot/P14867" AS ?protein1)
+  uniprotkb:P14867 up:interaction ?interaction.
   ?protein2 a up:Protein;
             up:interaction ?interaction.
 } LIMIT 100
 `
 
+//bio2rdf irefindex
+query9 = `
+PREFIX irefindex: <http://bio2rdf.org/irefindex_vocabulary:>
+SELECT ?interaction ?protein1 ?protein2
+WHERE {
+  ?interaction a irefindex:Pairwise-Interaction;
+            irefindex:interactor_a ?protein1;
+            irefindex:interactor_b ?protein2.
+} LIMIT 10
+`
+
+query10 = `
+SELECT ?pathway
+WHERE {
+	
+}
+`
+
+queryMDD = `
+PREFIX : <http://nextprot.org/rdf#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX cv: <http://nextprot.org/rdf/terminology/>
+SELECT DISTINCT ?iso
+WHERE {
+  {?protein :isoform ?iso.
+  ?iso :goMolecularFunction ?GO.
+  ?GO :term ?GOterm.
+  ?GOterm :childOf cv:GO_0016917;
+          rdfs:label ?GOlabel.}
+		  UNION
+  {?protein :isoform ?iso.
+  ?iso :goBiologicalProcess ?GO.
+  ?GO :term ?GOterm.
+  ?GOterm :childOf cv:GO_0007210;
+          rdfs:label ?GOlabel.}
+		  UNION
+  {?protein :isoform ?iso.
+  ?iso :goMolecularFunction ?GO.
+  ?GO :term ?GOterm.
+  ?GOterm :childOf cv:GO_0099589;
+          rdfs:label ?GOlabel.}
+		  UNION
+  {?protein :isoform ?iso.
+  ?iso :disease ?disease.
+  ?disease :term cv:DI-00697;
+	      rdfs:comment ?diseaseLabel.}
+}
+`
+
+queryPMDD = `
+PREFIX : <http://nextprot.org/rdf#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX cv: <http://nextprot.org/rdf/terminology/>
+SELECT DISTINCT ?iso
+WHERE {
+  {?protein :isoform ?iso.
+  ?iso :goBiologicalProcess ?GO.
+  ?GO :term ?GOterm.
+  ?GOterm :childOf cv:GO_0042698;
+          rdfs:label ?GOlabel.}
+		UNION
+  {?protein :isoform ?iso.
+  ?iso :goBiologicalProcess ?GO.
+  ?GO :term ?GOterm.
+  ?GOterm :childOf cv:GO_0032570;
+          rdfs:label ?GOlabel.}
+}
+`
+
+queryInteractions = `
+PREFIX : <http://nextprot.org/rdf#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX cv: <http://nextprot.org/rdf/terminology/>
+SELECT DISTINCT ?iso1 ?iso2
+WHERE {
+  {?protein :isoform ?iso1.
+  ?iso1 :goBiologicalProcess ?GO.
+  ?GO :term ?GOterm.
+  ?GOterm :childOf cv:GO_0042698.}
+		UNION
+  {?protein :isoform ?iso1.
+  ?iso1 :goBiologicalProcess ?GO.
+  ?GO :term ?GOterm.
+  ?GOterm :childOf cv:GO_0032570.}
+        UNION
+  {?protein :isoform ?iso2.
+  ?iso2 :goMolecularFunction ?GO.
+  ?GO :term ?GOterm.
+  ?GOterm :childOf cv:GO_0016917.}
+		UNION
+  {?protein :isoform ?iso2.
+  ?iso2 :goBiologicalProcess ?GO.
+  ?GO :term ?GOterm.
+  ?GOterm :childOf cv:GO_0007210.}
+		UNION
+  {?protein :isoform ?iso2.
+  ?iso2 :goMolecularFunction ?GO.
+  ?GO :term ?GOterm.
+  ?GOterm :childOf cv:GO_0099589.}
+		UNION
+  {?protein :isoform ?iso2.
+  ?iso2 :disease ?disease.
+  ?disease :term cv:DI-00697.}
+	    UNION
+  {?iso1 :interaction ?interaction.
+  ?interaction :interactant ?iso2.}
+}
+`
+
+
 
 // SOURCES
 	  
 sources = [];
-//sources.push("https://query.wikidata.org/sparql"); // 0 wikidata SPARQL endpoint
-//sources.push({type: "sparql", value: "https://api.nextprot.org/sparql"}); // 1 this SHOULD be the right one for nextprot
+//sources.push("https://query.wikidata.org/sparql"); // 0 wikidata
+sources.push({type: "sparql", value: "https://api.nextprot.org/sparql"}); // 1 nextprot
 //sources.push({type: "sparql", value: "http://sparql.wikipathways.org/sparql"}); // 2 wikipathways
 //sources.push("https://bio2rdf.org/sparql"); // 3 bio2RDF
-sources.push({type: "sparql", value: "https://sparql.uniprot.org/sparql"});
+//sources.push({type: "sparql", value: "https://sparql.uniprot.org/sparql"}); // 4 uniprot
+// 5 linked life data
 
 
 // FUNCTIONS
@@ -129,14 +249,17 @@ sources.push({type: "sparql", value: "https://sparql.uniprot.org/sparql"});
 //conducting the query and drawing the nodes inside of it
 async function fetchResults() {
 
-	myEngine.query(query8, {sources: sources,}) // only need to change the query and sources variables if want to alter the query
+	myEngine.query(queryInteractions, {sources: sources,}) // only need to change the query and sources variables if want to alter the query
 		.then(function (result) {
 		result.bindingsStream.on('data', function (data) {
 			// Each variable binding is an RDFJS term
-			interactionValue = data.get('?interaction').value;
-			sourceValue = data.get('?protein1').value;
-			targetValue = data.get('?protein2').value;
-			console.log(interactionValue + ' ' + sourceValue + ' ' + targetValue);
+			//interactionValue = data.get('?interaction').value;
+			sourceValue = data.get('?iso1').value;
+			targetValue = data.get('?iso2').value;
+			//nodeValue = data.get('?iso').value;
+			
+			//console.log(nodeValue);
+			console.log(sourceValue + ' ' + targetValue);
 
 			if (!elementsList.includes(sourceValue)) {
 				elementsList.push({data: {id: sourceValue}});
@@ -144,8 +267,11 @@ async function fetchResults() {
 			if (!elementsList.includes(targetValue)) {
 				elementsList.push({data: {id: targetValue}});
 			}
+			
+			//elementsList.push({data: {id: nodeValue}});
+			
 			// make an if-statement to get distinct edges or use the information about having multiple similar edges for weighting?
-			elementsList.push({data: { id: sourceValue + targetValue, source: sourceValue, target: targetValue}});
+			//elementsList.push({data: { id: sourceValue + targetValue, source: sourceValue, target: targetValue}});
 			
 		    drawNetwork();
 		});
