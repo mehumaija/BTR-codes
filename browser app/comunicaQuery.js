@@ -195,8 +195,15 @@ queryInteractionsNP = `
 PREFIX : <http://nextprot.org/rdf#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX cv: <http://nextprot.org/rdf/terminology/>
-SELECT DISTINCT ?iso1 ?iso2
+SELECT DISTINCT ?sw1 ?sw2 ?interactionType
 WHERE {
+  ?iso1 :interaction ?interaction.
+  ?interaction :interactant ?iso2;
+			   rdf:type ?interactionType.
+  ?iso1entry :isoform ?iso1;
+			 :swissprotPage ?sw1.
+  ?iso2 :swissprotPage ?sw2.
+  
   {?protein :isoform ?iso1.
   ?iso1 :goBiologicalProcess ?GO.
   ?GO :term ?GOterm.
@@ -225,8 +232,6 @@ WHERE {
   {?protein :isoform ?iso2.
   ?iso2 :disease ?disease.
   ?disease :term cv:DI-00697.}
-	    UNION
-  {?iso1 :interaction / :interactant ?iso2.}
 }
 `
 
@@ -327,8 +332,7 @@ async function fetchJson() {
 
 // this is for cytoscape.js
  function drawNetwork() { 
- 
-	console.log("Drawing network");
+
 	var cy = cytoscape({ // variable cy is the graph?
 
 	  container: document.getElementById('cy'), // container to render in, plot appears here

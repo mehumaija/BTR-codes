@@ -157,6 +157,50 @@ WHERE {
 }
 
 
+//Combined
+
+//get protein isoforms related to the female endocrien control (iso1) and depression (iso2) and all the interactions between these two groups and the type of interaction
+SELECT DISTINCT ?sw1 ?sw2 ?interactionType
+WHERE {
+  ?iso1 :interaction ?interaction.
+  ?interaction :interactant ?iso2;
+			   rdf:type ?interactionType.
+  ?iso1entry :isoform ?iso1;
+			 :swissprotPage ?sw1.
+  ?iso2 :swissprotPage ?sw2.
+  
+  {?protein :isoform ?iso1.
+  ?iso1 :goBiologicalProcess ?GO.
+  ?GO :term ?GOterm.
+  ?GOterm :childOf cv:GO_0042698.}
+		UNION
+  {?protein :isoform ?iso1.
+  ?iso1 :goBiologicalProcess ?GO.
+  ?GO :term ?GOterm.
+  ?GOterm :childOf cv:GO_0032570.}
+        UNION
+  {?protein :isoform ?iso2.
+  ?iso2 :goMolecularFunction ?GO.
+  ?GO :term ?GOterm.
+  ?GOterm :childOf cv:GO_0016917.}
+		UNION
+  {?protein :isoform ?iso2.
+  ?iso2 :goBiologicalProcess ?GO.
+  ?GO :term ?GOterm.
+  ?GOterm :childOf cv:GO_0007210.}
+		UNION
+  {?protein :isoform ?iso2.
+  ?iso2 :goMolecularFunction ?GO.
+  ?GO :term ?GOterm.
+  ?GOterm :childOf cv:GO_0099589.}
+		UNION
+  {?protein :isoform ?iso2.
+  ?iso2 :disease ?disease.
+  ?disease :term cv:DI-00697.}
+}
+
+
+
 
 //Others
 
