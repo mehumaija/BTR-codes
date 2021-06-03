@@ -191,7 +191,7 @@ WHERE {
 }
 `
 
-queryInteractions = `
+queryInteractionsNP = `
 PREFIX : <http://nextprot.org/rdf#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX cv: <http://nextprot.org/rdf/terminology/>
@@ -226,9 +226,37 @@ WHERE {
   ?iso2 :disease ?disease.
   ?disease :term cv:DI-00697.}
 	    UNION
-  {?iso1 :interaction ?interaction.
-  ?interaction :interactant ?iso2.}
+  {?iso1 :interaction / :interactant ?iso2.}
 }
+`
+
+queryInteractionsUP = `
+PREFIX up: <http://purl.uniprot.org/core/>
+PREFIX GO: <http://purl.obolibrary.org/obo/GO_>
+SELECT DISTINCT ?protein1 ?protein2
+WHERE {
+  ?interaction a up:Interaction.
+  ?protein1 up:interaction ?interaction.
+  ?protein2 up:interaction ?interaction.
+  
+  {?protein1 a up:Protein;
+             up:classifiedWith GO:0016917.}
+  UNION
+  {?protein1 a up:Protein;
+             up:classifiedWith GO:0007210.}
+  UNION
+  {?protein1 a up:Protein;
+             up:classifiedWith GO:0099589.}
+  UNION
+  {?protein1 a up:Protein;
+             up:classifiedWith GO:0006950.}
+  UNION
+  {?protein2 a up:Protein;
+             up:classifiedWith GO:0042698.}
+  UNION
+  {?protein2 a up:Protein;
+             up:classifiedWith GO:0032570.}
+} limit 300
 `
 
 
@@ -237,10 +265,10 @@ WHERE {
 	  
 sources = [];
 //sources.push("https://query.wikidata.org/sparql"); // 0 wikidata
-sources.push({type: "sparql", value: "https://api.nextprot.org/sparql"}); // 1 nextprot
+//sources.push({type: "sparql", value: "https://api.nextprot.org/sparql"}); // 1 nextprot
 //sources.push({type: "sparql", value: "http://sparql.wikipathways.org/sparql"}); // 2 wikipathways
 //sources.push("https://bio2rdf.org/sparql"); // 3 bio2RDF
-//sources.push({type: "sparql", value: "https://sparql.uniprot.org/sparql"}); // 4 uniprot
+sources.push({type: "sparql", value: "https://sparql.uniprot.org/sparql"}); // 4 uniprot
 // 5 linked life data
 
 
@@ -249,13 +277,13 @@ sources.push({type: "sparql", value: "https://api.nextprot.org/sparql"}); // 1 n
 //conducting the query and drawing the nodes inside of it
 async function fetchResults() {
 
-	myEngine.query(queryInteractions, {sources: sources,}) // only need to change the query and sources variables if want to alter the query
+	myEngine.query(queryInteractionsUP, {sources: sources,}) // only need to change the query and sources variables if want to alter the query
 		.then(function (result) {
 		result.bindingsStream.on('data', function (data) {
 			// Each variable binding is an RDFJS term
 			//interactionValue = data.get('?interaction').value;
-			sourceValue = data.get('?iso1').value;
-			targetValue = data.get('?iso2').value;
+			sourceValue = data.get('?protein1').value;
+			targetValue = data.get('?protein2').value;
 			//nodeValue = data.get('?iso').value;
 			
 			//console.log(nodeValue);
@@ -271,7 +299,7 @@ async function fetchResults() {
 			//elementsList.push({data: {id: nodeValue}});
 			
 			// make an if-statement to get distinct edges or use the information about having multiple similar edges for weighting?
-			//elementsList.push({data: { id: sourceValue + targetValue, source: sourceValue, target: targetValue}});
+			elementsList.push({data: { id: sourceValue + targetValue, source: sourceValue, target: targetValue}});
 			
 		    drawNetwork();
 		});

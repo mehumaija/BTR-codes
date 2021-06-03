@@ -254,6 +254,74 @@ then: all the biological processes
 
 
 
+
+//Depression queries
+
+//proteins involved in disease called Major Depressive Disorder
+PREFIX up: <http://purl.uniprot.org/core/>
+PREFIX disease: <http://purl.uniprot.org/diseases/>
+SELECT  ?protein ?disease
+WHERE {
+  ?annotation a up:Disease_Annotation.
+  ?protein up:annotation ?annotation.
+  ?annotation up:disease disease:697.
+}
+
+//proteins classified with serotonin receptor signalling
+PREFIX up: <http://purl.uniprot.org/core/>
+SELECT ?protein ?proteinLabel
+WHERE {
+  ?protein a up:Protein;
+           up:classifiedWith GO:0007210;
+           rdfs:label ?proteinLabel.
+}
+
+
+
+
+
+//Period queries
+
+
+
+
+
+//Combined 
+
+
+//get all the proteins related to depression (protein1) and the female endocrine control (protein2) and interactions between protein1 and protein2
+PREFIX up: <http://purl.uniprot.org/core/>
+PREFIX GO: <http://purl.obolibrary.org/obo/GO_>
+SELECT ?protein1 ?label1 ?protein2 ?label2 ?interaction
+WHERE {
+  ?interaction a up:Interaction.
+  ?protein1 up:interaction ?interaction;
+            rdfs:label ?label1.
+  ?protein2 up:interaction ?interaction;
+            rdfs:label ?label2.
+  
+  {?protein1 a up:Protein;
+             up:classifiedWith GO:0016917.}
+  UNION
+  {?protein1 a up:Protein;
+             up:classifiedWith GO:0007210.}
+  UNION
+  {?protein1 a up:Protein;
+             up:classifiedWith GO:0099589.}
+  UNION
+  {?protein1 a up:Protein;
+             up:classifiedWith GO:0006950.}
+  UNION
+  {?protein2 a up:Protein;
+             up:classifiedWith GO:0042698.}
+  UNION
+  {?protein2 a up:Protein;
+             up:classifiedWith GO:0032570.}
+}
+
+//Others
+
+
 //pathways and their labels
 SELECT ?pathway ?pathwayLabel
 WHERE {
@@ -285,15 +353,7 @@ WHERE {
   ?annotation up:disease ?disease.
 } LIMIT 10
 
-//proteins involved in disease called Major Depressive Disorder. Be sure to use the right prefix for disease:
-PREFIX up: <http://purl.uniprot.org/core/>
-PREFIX disease: <http://purl.uniprot.org/diseases/>
-SELECT  ?protein ?disease
-WHERE {
-  ?annotation a up:Disease_Annotation.
-  ?protein up:annotation ?annotation.
-  ?annotation up:disease disease:697.
-}
+
 
 //proteins involved in a disease and the disease annotation
 SELECT ?protein ?disease ?annotation
