@@ -191,6 +191,7 @@ WHERE {
 }
 `
 
+//change the terms used to be coherent with the query from uniprot
 queryInteractionsNP = `
 PREFIX : <http://nextprot.org/rdf#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -245,23 +246,23 @@ WHERE {
   ?protein2 up:interaction ?interaction.
   
   {?protein1 a up:Protein;
-             up:classifiedWith GO:0016917.}
-  UNION
-  {?protein1 a up:Protein;
-             up:classifiedWith GO:0007210.}
-  UNION
-  {?protein1 a up:Protein;
-             up:classifiedWith GO:0099589.}
-  UNION
-  {?protein1 a up:Protein;
-             up:classifiedWith GO:0006950.}
-  UNION
-  {?protein2 a up:Protein;
              up:classifiedWith GO:0042698.}
   UNION
-  {?protein2 a up:Protein;
+  {?protein1 a up:Protein;
              up:classifiedWith GO:0032570.}
-} limit 300
+  UNION
+  {?protein2 a up:Protein;
+             up:classifiedWith GO:0016917.}
+  UNION
+  {?protein2 a up:Protein;
+             up:classifiedWith GO:0007210.}
+  UNION
+  {?protein2 a up:Protein;
+             up:classifiedWith GO:0099589.}
+  UNION
+  {?protein2 a up:Protein;
+             up:classifiedWith GO:0006950.}
+} limit 50
 `
 
 
@@ -279,6 +280,9 @@ sources.push({type: "sparql", value: "https://sparql.uniprot.org/sparql"}); // 4
 
 // FUNCTIONS
 
+var sourceValues = [];
+var targetValues = [];
+
 //conducting the query and drawing the nodes inside of it
 async function fetchResults() {
 
@@ -286,24 +290,28 @@ async function fetchResults() {
 		.then(function (result) {
 		result.bindingsStream.on('data', function (data) {
 			// Each variable binding is an RDFJS term
-			//interactionValue = data.get('?interaction').value;
-			sourceValue = data.get('?protein1').value;
-			targetValue = data.get('?protein2').value;
-			//nodeValue = data.get('?iso').value;
-			
-			//console.log(nodeValue);
-			console.log(sourceValue + ' ' + targetValue);
+			sourceValue = data.get('?protein1').value; //female endocrine control related in all queries
+			sourceValues.push(sourceValue);
+			targetValue = data.get('?protein2').value; //depression related in all queries
+			targetValues.push(targetValue);
 
 			if (!elementsList.includes(sourceValue)) {
-				elementsList.push({data: {id: sourceValue}});
+				elementsList.push({data: {id: sourceValue, color: "red"}});
 			}
 			if (!elementsList.includes(targetValue)) {
-				elementsList.push({data: {id: targetValue}});
+				elementsList.push({data: {id: targetValue, color: "blue"}});
 			}
 			
-			//elementsList.push({data: {id: nodeValue}});
+			if (targetValues.includes(sourceValue)) {
+				var itemInBoth = elementsList.find(item => item.data.id = sourceValue);
+				itemInBoth.data.color = "purple";
+			}
+			/* if (sourceValues.includes(targetValue)) {
+				var itemInBoth = elementsList.find(item => item.data.id = targetValue);
+				itemInBoth.data.color = "purple";
+			} */
 			
-			// make an if-statement to get distinct edges or use the information about having multiple similar edges for weighting?
+			
 			elementsList.push({data: { id: sourceValue + targetValue, source: sourceValue, target: targetValue}});
 			
 		    drawNetwork();
@@ -343,8 +351,19 @@ async function fetchJson() {
 		{
 		  selector: 'node',
 		  style: {
-			'background-color': '#666',
-			'label': 'data(id)'
+			'background-color': 'data(color)',
+			'label': 'data(id)',
+            'width':' 120px',
+            'height': '80px',
+            'text-wrap': 'wrap',
+            'text-halign': 'center',
+            'text-valign': 'center',
+            'color': '#fff',
+            'shape': 'round-rectangle',
+            'text-max-width':'100px',
+            'font-size': '12px',
+            'border-width': '3px',
+            'border-color': '#283593'
 		  }
 		},
 
@@ -354,15 +373,15 @@ async function fetchJson() {
 			'width': 3,
 			'line-color': '#ccc',
 			'target-arrow-color': '#ccc',
-			'target-arrow-shape': 'triangle',
+			'target-arrow-shape': 'none',
 			'curve-style': 'bezier'
 		  }
 		}
 	  ],
 
 	  layout: {
-		name: 'grid',
-		rows: 1
+		name: 'concentric',
+	   //	rows: 1
 	  }
 
 	}); 
