@@ -24,7 +24,17 @@
   
   <body>
 	<div id="cy"></div>
-	<script> fetchResults(); console.log(elementsList); </script>
+	<script> 
+		fetchResults(); 
+		console.log(elementsList);
+		
+		btn = document.createElement('button');
+		btn.innerText = 'Button';
+		document.body.appendChild(btn);
+		btn.addEventListener('click', () => {
+			alert('Button clicked!');
+		});
+	</script>
   </body>
   
 </html>

@@ -262,7 +262,7 @@ WHERE {
   UNION
   {?protein2 a up:Protein;
              up:classifiedWith GO:0006950.}
-} limit 50
+} limit 1000
 `
 
 
@@ -283,7 +283,10 @@ sources.push({type: "sparql", value: "https://sparql.uniprot.org/sparql"}); // 4
 var sourceValues = [];
 var targetValues = [];
 
+
+
 //conducting the query and drawing the nodes inside of it
+// call the function two times with the source in the argument
 async function fetchResults() {
 
 	myEngine.query(queryInteractionsUP, {sources: sources,}) // only need to change the query and sources variables if want to alter the query
@@ -306,10 +309,10 @@ async function fetchResults() {
 				var itemInBoth = elementsList.find(item => item.data.id = sourceValue);
 				itemInBoth.data.color = "purple";
 			}
-			/* if (sourceValues.includes(targetValue)) {
+			if (sourceValues.includes(targetValue)) {
 				var itemInBoth = elementsList.find(item => item.data.id = targetValue);
 				itemInBoth.data.color = "purple";
-			} */
+			}
 			
 			
 			elementsList.push({data: { id: sourceValue + targetValue, source: sourceValue, target: targetValue}});
@@ -365,8 +368,16 @@ async function fetchJson() {
             'border-width': '3px',
             'border-color': '#283593'
 		  }
+		}, {
+		  selector: 'node:selected',
+		  style: {
+			"border-width": "6px",
+            "border-color": "#AAD8FF",
+            "border-opacity": "0.5",
+            "background-color": "#77828C",
+            "text-outline-color": "#77828C"
+		  }
 		},
-
 		{
 		  selector: 'edge',
 		  style: {

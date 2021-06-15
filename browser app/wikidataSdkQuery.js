@@ -25,6 +25,7 @@ select distinct ?entry where {
 `
 
 //nextprot: Proteins that interact with protein RBM17 and that are involved in splicing
+//This is a simple query. The nework would be like there is one node that is RBM17 to which all the other nodes are connected to.
 // i took # away from prefix http://nextprot.org/rdf#
 query3 = `
 PREFIX : <http://nextprot.org/rdf>
@@ -86,28 +87,57 @@ async function fetchJson() {
 		.then(function (response) {
 			// put the visualization and data processing neede dfor that inside this function
 			console.log(response);
-			//var nodeElements = [];
-			//var edgeElements = [];
 			
-			//add nodes
-			/*each node will contain information on what other nodes it is connected to. Maybe in a form of a list. Then edges are formed accordingly.
-			the information about the connections is retrieved from the queries*/
-			response.forEach(item => elementsList.push({data: {id: item["entry"], connections: ["serotonin receptor", "GABA-A"]}}));
-			
-			//add edges
-			/* go through all the elements in nodeElements, read what is in connections of each node. Make edges accordingly and push to edgeElements. */
-			elementsList.push({data: { id: "edge", source: elementsList[0]["data"]["id"], target: elementsList[1]["data"]["id"]}});
-			
-			//elementsList = nodeElements.concat(edgeElements);
+			getElementsList();
 			drawNetwork();
 			
 		});
 			
 }
 
+// to create list of elements for drawNetwork()
+private function getElementsList() {
+	
+	var nodeElements = [];
+	var nodeIDs = [];
+	var edgeElements = [];
+			
+	// add nodes
+	/*each node will contain information on what other nodes it is connected to. Maybe in a form of a list. Then edges are formed accordingly.
+	the information about the connections is retrieved from the queries*/
+			
+	/*For example if we can make the nextprot query3 work, all the results of the query get protein RBM17 in the connections of a node. 
+	RBM17 must be added as a node. Can use the nextprot identifier in the query for that. Maybe add all the known entries in the query as nodes?
+	All the nodes are added to nodeElements. Then we iterate through nodeElements and add edges between a node and the nodes in 
+	it's connections list. Connections of a node must also be in the nodes list then. */
+			
+	for (i = 0; i < response.length; i++) {
+		var entry = response[i]["entry"];
+		nodeElements.push({data: {id: entry, connections: ["serotonin receptor", "GABA-A"]}})); // how to add elements to connections?
+		nodeIDs.push(entry);
+	}
+			
+	// add edges
+	/* go through all the elements in nodeElements, read what is in connections of each node. Make edges accordingly and push to edgeElements. */
+			
+	for (i = 0; i < nodeElements.length; i++) {
+		var connections = nodeElements[i]["data"]["connections"];
+				
+		for (j = 0; j < connections.length; j++) {
+			if (nodeIDs.includes(connections[j])) {
+				edgeElements.push({data: { id: "edge", source: nodeIDs[i], target: connections[j]}});
+			}
+		}
+	}
+			
+	// combine node and edge lists into one list and return that and give to drawNetwork
+	elementsList = nodeElements.concat(edgeElements);
+	
+}
+
 
 // this is for cytoscape.js
- function drawNetwork() { 
+function drawNetwork() { 
  
 	console.log("Drawing network");
 	var cy = cytoscape({ // variable cy is the graph?
