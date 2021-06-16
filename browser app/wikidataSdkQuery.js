@@ -79,7 +79,7 @@ sources.push("https://bio2rdf.org/sparql"); // 3 bio2RDF
 // to serialize the data while executing query 
 async function fetchJson() {
 
-	var queryUrl = encodeURI(sources[0] + "?query=" + query1); // encode query on the url provided
+	var queryUrl = encodeURI(sources[1] + "?query=" + query2); // encode query on the url provided
 	
 	fetch(queryUrl, {headers: {"Accept": 'application/json'}})
 		.then(response => response.json())
@@ -88,15 +88,12 @@ async function fetchJson() {
 			// put the visualization and data processing neede dfor that inside this function
 			console.log(response);
 			
-			getElementsList();
-			drawNetwork();
-			
 		});
 			
 }
 
 // to create list of elements for drawNetwork()
-private function getElementsList() {
+function getElementsList() {
 	
 	var nodeElements = [];
 	var nodeIDs = [];

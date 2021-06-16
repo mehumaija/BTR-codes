@@ -233,7 +233,7 @@ WHERE {
   {?protein :isoform ?iso2.
   ?iso2 :disease ?disease.
   ?disease :term cv:DI-00697.}
-}
+} limit 30
 `
 
 queryInteractionsUP = `
@@ -268,9 +268,8 @@ WHERE {
 queryAmmarNP = `
 PREFIX : <http://nextprot.org/rdf#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX cv: <http://nextprot.org/rdf/terminology/>
-PREFIX wp: <http://vocabularies.wikipathways.org/wp#>
-PREFIX dcterms: <http://purl.org/dc/terms/>
 SELECT DISTINCT 
 	?protein1
 	?protein2

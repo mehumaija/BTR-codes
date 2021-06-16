@@ -19,22 +19,12 @@
 	<!-- Cytoscape.js , this must be written in a more general form but I don't know can I put the cytoscape.min.js in another place?? -->
 	<script src="cytoscape.min.js"></script>
 	<!-- JavaScript -->
-	<script src="comunicaQuery.js"></script>
+	<script src="wikidataSdkQuery.js"></script>
   </head>
   
   <body>
 	<div id="cy"></div>
-	<script> 
-		fetchResults(); 
-		console.log(elementsList);
-		
-		btn = document.createElement('button');
-		btn.innerText = 'Button';
-		document.body.appendChild(btn);
-		btn.addEventListener('click', () => {
-			alert('Button clicked!');
-		});
-	</script>
+	<script> fetchJson(); </script>
   </body>
   
 </html>
