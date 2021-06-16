@@ -265,16 +265,88 @@ WHERE {
 } limit 1000
 `
 
+queryAmmarNP = `
+PREFIX : <http://nextprot.org/rdf#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX cv: <http://nextprot.org/rdf/terminology/>
+PREFIX wp: <http://vocabularies.wikipathways.org/wp#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+SELECT DISTINCT 
+	?protein1
+	?protein2
+	?interaction ?interactionType ?quality
+	(SUM(xsd:integer(?numOfExperiments)) AS ?strength)
+	(SAMPLE(?doiUrl) AS ?ref)
+WHERE {
+	?interaction rdf:type ?interactionType.
+	?interaction :quality ?quality.
+	?interaction :evidence ?evidence.
+  	
+	{?evidence :numberOfExperiments ?numOfExperiments.}
+  	UNION {
+	  	?evidence :reference ?reference.
+  		?reference :from ?doi.
+	  	FILTER REGEX(STR(?doi), "DOI:")
+	  	BIND(REPLACE(STR(?doi), "DOI:", "https://doi.org/") AS ?doiUrl)}
+  
+	{ SELECT DISTINCT ?protein1 ?protein2 ?interaction
+		WHERE {
+			?iso1 :interaction ?interaction.
+			?interaction :interactant ?iso2.
+			
+			    {?protein1 :isoform ?iso1.
+				?iso1 :goBiologicalProcess ?GO1.
+				?GO1 :term ?GOterm1.
+				?GOterm1 :childOf ?terms1.
+				VALUES ?terms1 { cv:GO_0042698 cv:GO_0032570 }
+				OPTIONAL
+				{
+					?GO1 rdfs:comment ?label1.
+				}
+				BIND ("PMDD" AS ?condition1)}
+
+			{
+			    ?protein2 :isoform ?iso2.
+				{  
+					?iso2 :goBiologicalProcess ?GO2.
+					?GO2 :term ?GOterm2.
+					?GOterm2 :childOf ?terms2.
+					VALUES ?terms { cv:GO_0016917 cv:GO_0007210 cv:GO_0099589}
+
+					OPTIONAL
+					{
+						?GO2 rdfs:comment ?label2.
+					}
+					BIND ("Depression related biological process" AS ?condition2)
+				}
+				UNION
+				{
+					?iso2 :disease ?disease2.
+					?disease2 :term cv:DI-00697.
+
+					OPTIONAL
+					{
+						?disease2 rdfs:comment ?label2.
+					}
+					BIND ("Depression related disease" AS ?condition2)	
+				}
+			}
+		}
+	}
+}
+GROUP BY ?protein1 ?protein2 ?interaction ?interactionType ?quality
+`
+
 
 
 // SOURCES
 	  
 sources = [];
 //sources.push("https://query.wikidata.org/sparql"); // 0 wikidata
-//sources.push({type: "sparql", value: "https://api.nextprot.org/sparql"}); // 1 nextprot
+sources.push({type: "sparql", value: "https://api.nextprot.org/sparql"}); // 1 nextprot
 //sources.push({type: "sparql", value: "http://sparql.wikipathways.org/sparql"}); // 2 wikipathways
 //sources.push("https://bio2rdf.org/sparql"); // 3 bio2RDF
-sources.push({type: "sparql", value: "https://sparql.uniprot.org/sparql"}); // 4 uniprot
+//sources.push({type: "sparql", value: "https://sparql.uniprot.org/sparql"}); // 4 uniprot
 // 5 linked life data
 
 
@@ -289,7 +361,7 @@ var targetValues = [];
 // call the function two times with the source in the argument
 async function fetchResults() {
 
-	myEngine.query(queryInteractionsUP, {sources: sources,}) // only need to change the query and sources variables if want to alter the query
+	myEngine.query(queryAmmarNP, {sources: sources,}) // only need to change the query and sources variables if want to alter the query
 		.then(function (result) {
 		result.bindingsStream.on('data', function (data) {
 			// Each variable binding is an RDFJS term

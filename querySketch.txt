@@ -681,6 +681,7 @@ GROUP BY ?protein1 ?protein2 ?interaction ?interactionType ?quality
 //Ammar's query I altered for UP
 // status can be either probable or potential --> quality
 // up:PublishedCitation 
+// interaction up:experiments
 
 SELECT DISTINCT 
 	?protein1
@@ -691,9 +692,8 @@ SELECT DISTINCT
 WHERE {
 	?interaction rdf:type ?interactionType.
 	?interaction up:status ?quality.
-	?interaction :evidence ?evidence.
-  	
-	{?evidence :numberOfExperiments ?numOfExperiments.}
+	{?interaction up:experiments ?numOfexperiments.}
+
   	UNION {
 	  	?evidence :reference ?reference.
   		?reference :from ?doi.
