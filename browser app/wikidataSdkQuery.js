@@ -77,9 +77,9 @@ sources.push("https://bio2rdf.org/sparql"); // 3 bio2RDF
 
 
 // to serialize the data while executing query 
-async function fetchJson() {
+async function fetchResults() {
 
-	var queryUrl = encodeURI(sources[1] + "?query=" + query2); // encode query on the url provided
+	var queryUrl = encodeURI(sources[3] + "?query=" + query5); // encode query on the url provided
 	
 	fetch(queryUrl, {headers: {"Accept": 'application/json'}})
 		.then(response => response.json())
@@ -93,29 +93,17 @@ async function fetchJson() {
 }
 
 // to create list of elements for drawNetwork()
-function getElementsList() {
+/*function getElementsList() {
 	
 	var nodeElements = [];
 	var nodeIDs = [];
 	var edgeElements = [];
 			
-	// add nodes
-	/*each node will contain information on what other nodes it is connected to. Maybe in a form of a list. Then edges are formed accordingly.
-	the information about the connections is retrieved from the queries*/
-			
-	/*For example if we can make the nextprot query3 work, all the results of the query get protein RBM17 in the connections of a node. 
-	RBM17 must be added as a node. Can use the nextprot identifier in the query for that. Maybe add all the known entries in the query as nodes?
-	All the nodes are added to nodeElements. Then we iterate through nodeElements and add edges between a node and the nodes in 
-	it's connections list. Connections of a node must also be in the nodes list then. */
-			
 	for (i = 0; i < response.length; i++) {
 		var entry = response[i]["entry"];
-		nodeElements.push({data: {id: entry, connections: ["serotonin receptor", "GABA-A"]}})); // how to add elements to connections?
+		nodeElements.push({data: {id: entry, connections: ["serotonin receptor", "GABA-A"]}}); // how to add elements to connections?
 		nodeIDs.push(entry);
 	}
-			
-	// add edges
-	/* go through all the elements in nodeElements, read what is in connections of each node. Make edges accordingly and push to edgeElements. */
 			
 	for (i = 0; i < nodeElements.length; i++) {
 		var connections = nodeElements[i]["data"]["connections"];
@@ -126,12 +114,10 @@ function getElementsList() {
 			}
 		}
 	}
-			
-	// combine node and edge lists into one list and return that and give to drawNetwork
 	elementsList = nodeElements.concat(edgeElements);
 	
-}
-
+} 
+*/
 
 // this is for cytoscape.js
 function drawNetwork() { 

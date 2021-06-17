@@ -1,0 +1,82 @@
+FEDERATED QUERIES, WHY NOT WORKING???
+
+
+
+
+
+UNIPROT
+
+// does not work, gives error
+//getting the uniprot page of a KEGG Gene, translating it into string and into an URL
+PREFIX kegg: <http://bio2rdf.org/kegg_vocabulary:>
+SELECT *
+WHERE {
+SERVICE <https://bio2rdf.org/sparql> {
+    ?gene kegg:x-uniprot ?resource.
+    BIND(STR(?resource) as ?resourceString)
+    BIND(IRI(?resourceString) as ?resourceIri)
+    }
+} limit 10
+
+
+
+
+
+
+
+
+NEXTPROT
+
+
+
+// keeps on running, but if "?iso :swissprotPage ?swiri." is removed, gives results nice and fast.
+// ?swiri is the same form than what is got with ?iso :swissprotPage, the table even shows the link in the form of uniprot:XXXXX instead of the whole URL
+PREFIX kegg: <http://bio2rdf.org/kegg_vocabulary:>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+SELECT *
+WHERE {
+  SERVICE <https://bio2rdf.org/sparql> {
+    ?gene kegg:x-uniprot ?resource.
+    ?resource dcterms:identifier ?id.
+    BIND(REPLACE(STR(?id), "uniprot:", "http://bio2rdf.org/uniprot:") as ?UP)
+    BIND(IRI(?UP) AS ?UPiri)
+	
+    BIND(REPLACE(STR(?UP), "http://bio2rdf.org/uniprot:", "http://www.uniprot.org/uniprot/") as ?sw)
+    BIND(IRI(?sw) AS ?swiri) }
+  
+  ?iso :swissprotPage ?swiri.
+  
+} limit 10
+
+
+
+
+
+
+
+BIO2RDF
+
+
+// trying string url conversions. this works without the federation "SERVICE <https://api.nextprot.org/sparql> {?iso :swissprotPage ?swiri.}" with it, gives 504 Gateway Time-out
+// taking the uniprot page of KEGG Gene, taking its Uniprot identifier (not necessary), replacing it into a String of URL and that into a real URL
+// ^^ ?UPiri is exactly the same than ?resource
+// takig the Uniprot URL String and replacing that with the Uniprot URL String appropriate in Nextprot and translating that into URL
+PREFIX kegg: <http://bio2rdf.org/kegg_vocabulary:>
+PREFIX : <http://nextprot.org/rdf#>
+SELECT *
+WHERE {
+
+  ?gene kegg:x-uniprot ?resource.
+  ?resource dcterms:identifier ?id.
+  BIND(REPLACE(STR(?id), "uniprot:", "http://bio2rdf.org/uniprot:") as ?UP)
+  BIND(IRI(?UP) AS ?UPiri)
+	
+  BIND(REPLACE(STR(?UP), "http://bio2rdf.org/uniprot:", "http://www.uniprot.org/uniprot/") as ?sw)
+  BIND(IRI(?sw) AS ?swiri) 
+
+  SERVICE <https://api.nextprot.org/sparql> {
+     ?iso :swissprotPage ?swiri.
+  }
+
+} limit 10
+

@@ -583,8 +583,8 @@ WHERE {
   ?disease :term cv:DI-00697.}
   
   
-  BIND(REPLACE(STR(?sw1), "https://www.uniprot.org/uniprot/", "https://identifiers.org/uniprot/") as ?UP1)
-  BIND(REPLACE(STR(?sw2), "https://www.uniprot.org/uniprot/", "https://identifiers.org/uniprot/") as ?UP2)
+  BIND(REPLACE(STR(?sw1), "http://www.uniprot.org/uniprot/", "https://identifiers.org/uniprot/") as ?UP1)
+  BIND(REPLACE(STR(?sw2), "http://www.uniprot.org/uniprot/", "https://identifiers.org/uniprot/") as ?UP2)
   SERVICE <http://sparql.wikipathways.org/sparql> {
 	?geneProduct1 a wp:GeneProduct;
                    rdfs:label ?label;
@@ -722,6 +722,21 @@ GROUP BY ?protein1 ?protein2 ?interaction ?interactionType ?quality
 
 
 
+//bio2rdf kegg pathway query template
+
+BIND(REPLACE(STR(?sw1), "https://www.uniprot.org/uniprot/", "http://bio2rdf.org/uniprot:") as ?UP1)
+BIND(REPLACE(STR(?sw2), "https://www.uniprot.org/uniprot/", "http://bio2rdf.org/uniprot:") as ?UP2)
+PREFIX kegg: <http://bio2rdf.org/kegg_vocabulary:>
+SELECT *
+WHERE {
+  ?gene kegg:x-uniprot ?resource;
+        kegg:pathway ?pathway.
+} limit 10
+
+
+// the URLs for kegg
+gene	resource	pathway
+http://bio2rdf.org/kegg:hsa_10262	http://bio2rdf.org/uniprot:B3KUJ0	http://bio2rdf.org/kegg:map03040
 
 
 
@@ -730,9 +745,70 @@ GROUP BY ?protein1 ?protein2 ?interaction ?interactionType ?quality
 
 
 
-BIND(REPLACE(STR(?uniprotProtein), "uniprot.org", "identifiers.org"))
+
+PREFIX : <http://nextprot.org/rdf#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX cv: <http://nextprot.org/rdf/terminology/>
+PREFIX wp: <http://vocabularies.wikipathways.org/wp#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX kegg: <http://bio2rdf.org/kegg_vocabulary:>
+SELECT DISTINCT ?sw1 ?sw2 ?interactionType ?pathway
+WHERE {
+  ?iso1 :interaction ?interaction.
+  ?interaction :interactant ?iso2;
+			   rdf:type ?interactionType.
+  ?iso1entry :isoform ?iso1;
+			 :swissprotPage ?sw1.
+  ?iso2 :swissprotPage ?sw2.
+  
+  {?protein :isoform ?iso1.
+  ?iso1 :goBiologicalProcess ?GO.
+  ?GO :term ?GOterm.
+  ?GOterm :childOf cv:GO_0042698.}
+		UNION
+  {?protein :isoform ?iso1.
+  ?iso1 :goBiologicalProcess ?GO.
+  ?GO :term ?GOterm.
+  ?GOterm :childOf cv:GO_0032570.}
+        UNION
+  {?protein :isoform ?iso2.
+  ?iso2 :goMolecularFunction ?GO.
+  ?GO :term ?GOterm.
+  ?GOterm :childOf cv:GO_0016917.}
+		UNION
+  {?protein :isoform ?iso2.
+  ?iso2 :goBiologicalProcess ?GO.
+  ?GO :term ?GOterm.
+  ?GOterm :childOf cv:GO_0007210.}
+		UNION
+  {?protein :isoform ?iso2.
+  ?iso2 :goMolecularFunction ?GO.
+  ?GO :term ?GOterm.
+  ?GOterm :childOf cv:GO_0099589.}
+		UNION
+  {?protein :isoform ?iso2.
+  ?iso2 :disease ?disease.
+  ?disease :term cv:DI-00697.}
+  
+  BIND(REPLACE(STR(?sw1), "http://www.uniprot.org/uniprot/", "http://bio2rdf.org/uniprot:") as ?UP1)
+  BIND(REPLACE(STR(?sw2), "http://www.uniprot.org/uniprot/", "http://bio2rdf.org/uniprot:") as ?UP2)
+  SERVICE <https://bio2rdf.org/sparql> {
+    ?gene1 kegg:x-uniprot ?UP1;
+        kegg:pathway ?pathway1.}
+} limit 10
 
 
+
+
+//this is how to get the exact same URL from a string than from the property kegg:x-uniprot in bio2rdf kegg
+PREFIX kegg: <http://bio2rdf.org/kegg_vocabulary:>
+SELECT *
+WHERE {
+  ?gene kegg:x-uniprot ?resource.
+  ?resource dcterms:identifier ?id.
+  BIND(REPLACE(STR(?id), "uniprot:", "http://bio2rdf.org/uniprot:") as ?UP)
+  BIND(IRI(?UP) AS ?UPiri)
+} limit 10
 
 
 
