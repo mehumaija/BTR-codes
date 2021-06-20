@@ -196,7 +196,7 @@ queryInteractionsNP = `
 PREFIX : <http://nextprot.org/rdf#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX cv: <http://nextprot.org/rdf/terminology/>
-SELECT DISTINCT ?protein1 ?protein2 ?interactionType ?numOfExperiments
+SELECT DISTINCT ?protein1 ?proteinLabel1 ?protein2 ?proteinLabel2 ?interactionType ?numOfExperiments
 WHERE {
   ?iso1 :interaction ?interaction.
   ?interaction :interactant ?iso2;
@@ -207,8 +207,13 @@ WHERE {
   ?evidence :numberOfExperiments ?numOfExperiments.
 			  
   ?iso1entry :isoform ?iso1;
-			 :swissprotPage ?P1.
-  ?iso2 :swissprotPage ?P2.
+			 :swissprotPage ?P1;
+			 :recommendedName ?name1.
+  ?name1 :fullName ?proteinLabel1.
+  
+  ?iso2 :swissprotPage ?P2;
+		:recommendedName ?name2.
+  ?name2 :fullName ?proteinLabel2.
   
   BIND(REPLACE(STR(?P1), "http://www.uniprot.org/uniprot/", "") as ?protein1)
   BIND(REPLACE(STR(?P2), "http://www.uniprot.org/uniprot/", "") as ?protein2)
@@ -241,7 +246,7 @@ WHERE {
   {?protein :isoform ?iso2.
   ?iso2 :disease ?disease.
   ?disease :term cv:DI-00697.}
-} limit 50
+} limit 200
 `
 
 
@@ -249,14 +254,16 @@ WHERE {
 queryInteractionsUP = `
 PREFIX up: <http://purl.uniprot.org/core/>
 PREFIX GO: <http://purl.obolibrary.org/obo/GO_>
-SELECT DISTINCT ?protein1 ?protein2 ?interactionType ?numOfExperiments
+SELECT DISTINCT ?protein1 ?proteinLabel1 ?protein2 ?proteinLabel2 ?interactionType ?numOfExperiments
 WHERE {
   ?interaction a up:Interaction;
                rdf:type ?interactionType;
 			   up:experiments ?numOfExperiments.
 			   
-  ?P1 up:interaction ?interaction.
-  ?P2 up:interaction ?interaction.
+  ?P1 up:interaction ?interaction;
+      rdfs:label ?proteinLabel1.
+  ?P2 up:interaction ?interaction;
+      rdfs:label ?proteinLabel2.
   
   BIND(REPLACE(STR(?P1), "http://purl.uniprot.org/uniprot/", "") as ?protein1)
   BIND(REPLACE(STR(?P2), "http://purl.uniprot.org/uniprot/", "") as ?protein2)
@@ -278,7 +285,7 @@ WHERE {
   UNION
   {?P2 a up:Protein;
              up:classifiedWith GO:0006950.}
-} limit 50
+} limit 200
 `
 
 
@@ -320,12 +327,14 @@ async function fetchResults(query, source) {
 			type = data.get('?interactionType').value;
 			//quality = data.get('?quality').value;
 			n_exp = data.get('?numOfExperiments').value;
+			sourceLabel = data.get('?proteinLabel1').value;
+			targetLabel = data.get('?proteinLabel2').value;
 			
 			if (!elementsList.includes(sourceValue)) {
-				elementsList.push({data: {id: sourceValue, color: "red"}});
+				elementsList.push({data: {id: sourceValue, label: sourceLabel, color: "red"}});
 			}
 			if (!elementsList.includes(targetValue)) {
-				elementsList.push({data: {id: targetValue, color: "blue"}});
+				elementsList.push({data: {id: targetValue, label: targetLabel, color: "blue"}});
 			}
 			
 			if (targetValues.includes(sourceValue)) {
@@ -337,10 +346,21 @@ async function fetchResults(query, source) {
 				itemInBoth.data.color = "purple";
 			}
 			
-			elementsList.push({data: { id: sourceValue + targetValue, source: sourceValue, target: targetValue, interactionType: type, n_exp: n_exp}});
+			var edgeColor;
+			if (type == "http://nextprot.org/rdf#BinaryInteraction") {
+				edgeColor = "brown"; 
+			} else if (type == "http://purl.uniprot.org/core/Interaction") {
+				edgeColor = "orange";
+			} else {
+				edgeColor = "#ccc";
+			}
+			
+			elementsList.push({data: { id: sourceValue + targetValue, source: sourceValue, target: targetValue, interactionType: type, n_exp: n_exp, color: edgeColor}});
 			
 		    drawNetwork();
+			
 		});
+				
 	});
 	
 }
@@ -368,7 +388,7 @@ async function fetchJson() {
  function drawNetwork() { 
 
 	var cy = cytoscape({ // variable cy is the graph?
-
+	
 	  container: document.getElementById('cy'), // container to render in, plot appears here
 
 	  elements: elementsList,
@@ -378,7 +398,7 @@ async function fetchJson() {
 		  selector: 'node',
 		  style: {
 			'background-color': 'data(color)',
-			'label': 'data(id)',
+			'label': 'data(label)',
             'width':' 120px',
             'height': '80px',
             'text-wrap': 'wrap',
@@ -404,8 +424,8 @@ async function fetchJson() {
 		{
 		  selector: 'edge',
 		  style: {
-			'width': 3,
-			'line-color': '#ccc',
+			'width': 'data(n_exp)',
+			'line-color': 'data(color)',
 			'target-arrow-color': '#ccc',
 			'target-arrow-shape': 'none',
 			'curve-style': 'bezier'
@@ -419,4 +439,17 @@ async function fetchJson() {
 	  }
 
 	}); 
+	
+	cy.on('tap', 'node', function(evt){
+		var node = evt.target;
+		var url = "https://www.uniprot.org/uniprot/" + node.id();
+		console.log(node.data("label") + ": " + url);
+		
+    });
+	
+	cy.on('tap', 'edge', function(evt){
+		var edge = evt.target;
+		console.log("interaction type " + edge.data("interactionType"));
+    });
+	
 }
