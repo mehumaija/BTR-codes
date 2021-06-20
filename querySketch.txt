@@ -537,6 +537,26 @@ WHERE {
 
 
 
+// ^^the same but in more concise form
+PREFIX up: <http://purl.uniprot.org/core/>
+PREFIX GO: <http://purl.obolibrary.org/obo/GO_>
+SELECT ?protein1 ?protein2 ?interaction ?interactionType ?numOfExperiments
+WHERE {
+  ?interaction a up:Interaction;
+               rdf:type ?interactionType;
+               up:experiments ?numOfExperiments.
+  ?protein1 up:interaction ?interaction.
+  ?protein2 up:interaction ?interaction.
+    
+  {?protein1 up:classifiedWith ?terms1.
+    VALUES ?terms1 {GO:0042698 GO:0032570}}
+  UNION
+  {?protein2 up:classifiedWith ?terms2.
+    VALUES ?terms2 {GO:0016917 GO:0007210 GO:0099589 GO:0006950}}
+} 
+
+
+
 
 
 PREFIX : <http://nextprot.org/rdf#>
@@ -608,7 +628,10 @@ WHERE {
 //AMMAR'S QUERY
 
 
-
+PREFIX : <http://nextprot.org/rdf#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX cv: <http://nextprot.org/rdf/terminology/>
 SELECT DISTINCT 
 	?protein1
 	?protein2
@@ -797,6 +820,42 @@ WHERE {
         kegg:pathway ?pathway1.}
 } limit 10
 
+
+
+// NP query used in the app in more concise form but for some reason couldn't make it work
+PREFIX : <http://nextprot.org/rdf#>
+PREFIX cv: <http://nextprot.org/rdf/terminology/>
+SELECT DISTINCT ?protein1 ?protein2 ?interactionType ?quality ?numOfExperiments
+WHERE {
+  ?iso1 :interaction ?interaction.
+  ?interaction :interactant ?iso2;
+			   rdf:type ?interactionType;
+			   :quality ?quality;
+			   :evidence ?evidence.
+  ?evidence :numberOfExperiments ?numOfExperiments.
+  
+  ?iso1entry :isoform ?iso1;
+			 :swissprotPage ?protein1.
+  ?iso2 :swissprotPage ?protein2.
+  
+  {?proteinNP1 :isoform ?iso1.
+  ?iso1 :goBiologicalProcess ?GO1.
+  ?GO1 :term ?GOterm1.
+  ?GOterm1 :childOf ?terms1.
+  VALUES ?terms1 {cv:GO_0042698 cv:GO_0032570}}
+  
+        UNION
+  {?proteinNP2 :isoform ?iso2.
+  ?iso2 :goMolecularFunction ?GO2.
+  ?GO2 :term ?GOterm2.
+  ?GOterm2 :childOf ?terms2.
+  VALUES ?terms2 {cv:GO_0007210 cv:GO_0099589 cv:GO_0016917}}
+  
+		UNION
+  {?proteinNP2 :isoform ?iso2.
+  ?iso2 :disease ?disease.
+  ?disease :term cv:DI-00697.}
+}
 
 
 

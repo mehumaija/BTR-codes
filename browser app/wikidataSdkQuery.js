@@ -64,6 +64,27 @@ SELECT DISTINCT * WHERE {
 LIMIT 10
 `
 
+
+//works!!!!
+queryUP = `
+PREFIX up: <http://purl.uniprot.org/core/>
+PREFIX GO: <http://purl.obolibrary.org/obo/GO_>
+SELECT ?protein1 ?protein2 ?interaction ?interactionType ?numOfExperiments
+WHERE {
+  ?interaction a up:Interaction;
+               rdf:type ?interactionType;
+               up:experiments ?numOfExperiments.
+  ?protein1 up:interaction ?interaction.
+  ?protein2 up:interaction ?interaction.
+    
+  {?protein1 up:classifiedWith ?terms1.
+    VALUES ?terms1 {GO:0042698 GO:0032570}}
+  UNION
+  {?protein2 up:classifiedWith ?terms2.
+    VALUES ?terms2 {GO:0016917 GO:0007210 GO:0099589 GO:0006950}}
+} 
+`
+
 // SOURCES
 	  
 sources = [];
@@ -71,6 +92,7 @@ sources.push("https://query.wikidata.org/sparql"); // 0 wikidata SPARQL endpoint
 sources.push("https://api.nextprot.org/sparql"); // 1 this SHOULD be the right one for nextprot
 sources.push("http://sparql.wikipathways.org/sparql"); // 2 wikipathways
 sources.push("https://bio2rdf.org/sparql"); // 3 bio2RDF
+sources.push("https://sparql.uniprot.org/sparql"); // 4 Uniprot
 
 
 // FUNCTIONS
@@ -79,7 +101,7 @@ sources.push("https://bio2rdf.org/sparql"); // 3 bio2RDF
 // to serialize the data while executing query 
 async function fetchResults() {
 
-	var queryUrl = encodeURI(sources[3] + "?query=" + query5); // encode query on the url provided
+	var queryUrl = encodeURI(sources[4] + "?query=" + queryUP); // encode query on the url provided
 	
 	fetch(queryUrl, {headers: {"Accept": 'application/json'}})
 		.then(response => response.json())

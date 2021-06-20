@@ -191,19 +191,27 @@ WHERE {
 }
 `
 
-//change the terms used to be coherent with the query from uniprot
+//this works 
 queryInteractionsNP = `
 PREFIX : <http://nextprot.org/rdf#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX cv: <http://nextprot.org/rdf/terminology/>
-SELECT DISTINCT ?sw1 ?sw2 ?interactionType
+SELECT DISTINCT ?protein1 ?protein2 ?interactionType ?numOfExperiments
 WHERE {
   ?iso1 :interaction ?interaction.
   ?interaction :interactant ?iso2;
-			   rdf:type ?interactionType.
+			   rdf:type ?interactionType;
+               :quality ?quality;
+			   :evidence ?evidence.			   
+			   
+  ?evidence :numberOfExperiments ?numOfExperiments.
+			  
   ?iso1entry :isoform ?iso1;
-			 :swissprotPage ?sw1.
-  ?iso2 :swissprotPage ?sw2.
+			 :swissprotPage ?P1.
+  ?iso2 :swissprotPage ?P2.
+  
+  BIND(REPLACE(STR(?P1), "http://www.uniprot.org/uniprot/", "") as ?protein1)
+  BIND(REPLACE(STR(?P2), "http://www.uniprot.org/uniprot/", "") as ?protein2)
   
   {?protein :isoform ?iso1.
   ?iso1 :goBiologicalProcess ?GO.
@@ -233,120 +241,63 @@ WHERE {
   {?protein :isoform ?iso2.
   ?iso2 :disease ?disease.
   ?disease :term cv:DI-00697.}
-} limit 30
+} limit 50
 `
 
+
+//works!
 queryInteractionsUP = `
 PREFIX up: <http://purl.uniprot.org/core/>
 PREFIX GO: <http://purl.obolibrary.org/obo/GO_>
-SELECT DISTINCT ?protein1 ?protein2
+SELECT DISTINCT ?protein1 ?protein2 ?interactionType ?numOfExperiments
 WHERE {
-  ?interaction a up:Interaction.
-  ?protein1 up:interaction ?interaction.
-  ?protein2 up:interaction ?interaction.
+  ?interaction a up:Interaction;
+               rdf:type ?interactionType;
+			   up:experiments ?numOfExperiments.
+			   
+  ?P1 up:interaction ?interaction.
+  ?P2 up:interaction ?interaction.
   
-  {?protein1 a up:Protein;
+  BIND(REPLACE(STR(?P1), "http://purl.uniprot.org/uniprot/", "") as ?protein1)
+  BIND(REPLACE(STR(?P2), "http://purl.uniprot.org/uniprot/", "") as ?protein2)
+  
+  {?P1 a up:Protein;
              up:classifiedWith GO:0042698.}
   UNION
-  {?protein1 a up:Protein;
+  {?P1 a up:Protein;
              up:classifiedWith GO:0032570.}
   UNION
-  {?protein2 a up:Protein;
+  {?P2 a up:Protein;
              up:classifiedWith GO:0016917.}
   UNION
-  {?protein2 a up:Protein;
+  {?P2 a up:Protein;
              up:classifiedWith GO:0007210.}
   UNION
-  {?protein2 a up:Protein;
+  {?P2 a up:Protein;
              up:classifiedWith GO:0099589.}
   UNION
-  {?protein2 a up:Protein;
+  {?P2 a up:Protein;
              up:classifiedWith GO:0006950.}
-} limit 1000
-`
-
-queryAmmarNP = `
-PREFIX : <http://nextprot.org/rdf#>
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-PREFIX cv: <http://nextprot.org/rdf/terminology/>
-SELECT DISTINCT 
-	?protein1
-	?protein2
-	?interaction ?interactionType ?quality
-	(SUM(xsd:integer(?numOfExperiments)) AS ?strength)
-	(SAMPLE(?doiUrl) AS ?ref)
-WHERE {
-	?interaction rdf:type ?interactionType.
-	?interaction :quality ?quality.
-	?interaction :evidence ?evidence.
-  	
-	{?evidence :numberOfExperiments ?numOfExperiments.}
-  	UNION {
-	  	?evidence :reference ?reference.
-  		?reference :from ?doi.
-	  	FILTER REGEX(STR(?doi), "DOI:")
-	  	BIND(REPLACE(STR(?doi), "DOI:", "https://doi.org/") AS ?doiUrl)}
-  
-	{ SELECT DISTINCT ?protein1 ?protein2 ?interaction
-		WHERE {
-			?iso1 :interaction ?interaction.
-			?interaction :interactant ?iso2.
-			
-			    {?protein1 :isoform ?iso1.
-				?iso1 :goBiologicalProcess ?GO1.
-				?GO1 :term ?GOterm1.
-				?GOterm1 :childOf ?terms1.
-				VALUES ?terms1 { cv:GO_0042698 cv:GO_0032570 }
-				OPTIONAL
-				{
-					?GO1 rdfs:comment ?label1.
-				}
-				BIND ("PMDD" AS ?condition1)}
-
-			{
-			    ?protein2 :isoform ?iso2.
-				{  
-					?iso2 :goBiologicalProcess ?GO2.
-					?GO2 :term ?GOterm2.
-					?GOterm2 :childOf ?terms2.
-					VALUES ?terms { cv:GO_0016917 cv:GO_0007210 cv:GO_0099589}
-
-					OPTIONAL
-					{
-						?GO2 rdfs:comment ?label2.
-					}
-					BIND ("Depression related biological process" AS ?condition2)
-				}
-				UNION
-				{
-					?iso2 :disease ?disease2.
-					?disease2 :term cv:DI-00697.
-
-					OPTIONAL
-					{
-						?disease2 rdfs:comment ?label2.
-					}
-					BIND ("Depression related disease" AS ?condition2)	
-				}
-			}
-		}
-	}
-}
-GROUP BY ?protein1 ?protein2 ?interaction ?interactionType ?quality
+} limit 50
 `
 
 
 
 // SOURCES
 	  
-sources = [];
+//sources = [];
 //sources.push("https://query.wikidata.org/sparql"); // 0 wikidata
-sources.push({type: "sparql", value: "https://api.nextprot.org/sparql"}); // 1 nextprot
+//sources.push({type: "sparql", value: "https://api.nextprot.org/sparql"}); // 1 nextprot
 //sources.push({type: "sparql", value: "http://sparql.wikipathways.org/sparql"}); // 2 wikipathways
 //sources.push("https://bio2rdf.org/sparql"); // 3 bio2RDF
 //sources.push({type: "sparql", value: "https://sparql.uniprot.org/sparql"}); // 4 uniprot
 // 5 linked life data
+
+UP = [];
+UP.push({type: "sparql", value: "https://sparql.uniprot.org/sparql"});
+
+NP = [];
+NP.push({type: "sparql", value: "https://api.nextprot.org/sparql"});
 
 
 // FUNCTIONS
@@ -354,13 +305,11 @@ sources.push({type: "sparql", value: "https://api.nextprot.org/sparql"}); // 1 n
 var sourceValues = [];
 var targetValues = [];
 
-
-
 //conducting the query and drawing the nodes inside of it
 // call the function two times with the source in the argument
-async function fetchResults() {
+async function fetchResults(query, source) {
 
-	myEngine.query(queryAmmarNP, {sources: sources,}) // only need to change the query and sources variables if want to alter the query
+	myEngine.query(query, {sources: source,}) // only need to change the query and sources variables if want to alter the query
 		.then(function (result) {
 		result.bindingsStream.on('data', function (data) {
 			// Each variable binding is an RDFJS term
@@ -368,7 +317,10 @@ async function fetchResults() {
 			sourceValues.push(sourceValue);
 			targetValue = data.get('?protein2').value; //depression related in all queries
 			targetValues.push(targetValue);
-
+			type = data.get('?interactionType').value;
+			//quality = data.get('?quality').value;
+			n_exp = data.get('?numOfExperiments').value;
+			
 			if (!elementsList.includes(sourceValue)) {
 				elementsList.push({data: {id: sourceValue, color: "red"}});
 			}
@@ -385,12 +337,12 @@ async function fetchResults() {
 				itemInBoth.data.color = "purple";
 			}
 			
-			
-			elementsList.push({data: { id: sourceValue + targetValue, source: sourceValue, target: targetValue}});
+			elementsList.push({data: { id: sourceValue + targetValue, source: sourceValue, target: targetValue, interactionType: type, n_exp: n_exp}});
 			
 		    drawNetwork();
 		});
 	});
+	
 }
 
 
