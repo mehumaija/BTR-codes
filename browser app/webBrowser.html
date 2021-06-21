@@ -2,10 +2,27 @@
 
   <style>
     #cy {
-      width: 1000px;
-      height: 600px;
+      width: 1500px;
+      height: 800px;
       display: block;
     }
+	
+	#main-container {
+	  display: table;
+	  width: 100%;
+	  height: 100%;
+	}
+	
+	#sidebar {
+      margin: 0;
+      padding: 0;
+      width: 200px;
+      background-color: #f1f1f1;
+      position: fixed;
+      height: 100%;
+      overflow: auto;
+    }
+
   </style>
   
   <head>
@@ -23,12 +40,21 @@
   </head>
   
   <body>
-	<div id="cy"></div>
-	<script>
-	  fetchResults(queryInteractionsUP, UP);
-	  fetchResults(queryInteractionsNP, NP);
-	  console.log(elementsList); 
-	</script>
+    <div class="header">
+	  <h1>Finding links between MDD and PMDD</h1>
+	</div>
+	<div id="main container">
+	  <div id="sidebar">
+	    <p>Click a node or an edge and the info will appear here.</p>
+	  </div>
+	  <div id="cy"></div>
+	    <script>
+	      fetchResults(queryInteractionsUP, UP);
+	      fetchResults(queryInteractionsNP, NP);
+	      console.log(elementsList); 
+	    </script>
+	</div>
+		
   </body>
   
 </html>

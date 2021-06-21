@@ -196,7 +196,7 @@ queryInteractionsNP = `
 PREFIX : <http://nextprot.org/rdf#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX cv: <http://nextprot.org/rdf/terminology/>
-SELECT DISTINCT ?protein1 ?proteinLabel1 ?protein2 ?proteinLabel2 ?interactionType ?numOfExperiments
+SELECT DISTINCT ?protein1 ?proteinLabel1 ?protein2 ?proteinLabel2 ?interaction ?interactionType ?numOfExperiments
 WHERE {
   ?iso1 :interaction ?interaction.
   ?interaction :interactant ?iso2;
@@ -246,7 +246,7 @@ WHERE {
   {?protein :isoform ?iso2.
   ?iso2 :disease ?disease.
   ?disease :term cv:DI-00697.}
-} limit 200
+} limit 10
 `
 
 
@@ -254,7 +254,7 @@ WHERE {
 queryInteractionsUP = `
 PREFIX up: <http://purl.uniprot.org/core/>
 PREFIX GO: <http://purl.obolibrary.org/obo/GO_>
-SELECT DISTINCT ?protein1 ?proteinLabel1 ?protein2 ?proteinLabel2 ?interactionType ?numOfExperiments
+SELECT DISTINCT ?protein1 ?proteinLabel1 ?protein2 ?proteinLabel2 ?interaction ?interactionType ?numOfExperiments
 WHERE {
   ?interaction a up:Interaction;
                rdf:type ?interactionType;
@@ -285,7 +285,7 @@ WHERE {
   UNION
   {?P2 a up:Protein;
              up:classifiedWith GO:0006950.}
-} limit 200
+} limit 10
 `
 
 
@@ -315,7 +315,7 @@ var targetValues = [];
 //conducting the query and drawing the nodes inside of it
 // call the function two times with the source in the argument
 async function fetchResults(query, source) {
-
+	
 	myEngine.query(query, {sources: source,}) // only need to change the query and sources variables if want to alter the query
 		.then(function (result) {
 		result.bindingsStream.on('data', function (data) {
@@ -324,8 +324,8 @@ async function fetchResults(query, source) {
 			sourceValues.push(sourceValue);
 			targetValue = data.get('?protein2').value; //depression related in all queries
 			targetValues.push(targetValue);
+			interaction = data.get("?interaction").value;
 			type = data.get('?interactionType').value;
-			//quality = data.get('?quality').value;
 			n_exp = data.get('?numOfExperiments').value;
 			sourceLabel = data.get('?proteinLabel1').value;
 			targetLabel = data.get('?proteinLabel2').value;
@@ -351,11 +351,15 @@ async function fetchResults(query, source) {
 				edgeColor = "brown"; 
 			} else if (type == "http://purl.uniprot.org/core/Interaction") {
 				edgeColor = "orange";
-			} else {
+			} else if (type == "http://purl.uniprot.org/core/Non_Self_Interaction"){
+				edgeColor = "yellow";
+			}else {
 				edgeColor = "#ccc";
 			}
 			
-			elementsList.push({data: { id: sourceValue + targetValue, source: sourceValue, target: targetValue, interactionType: type, n_exp: n_exp, color: edgeColor}});
+			elementsList.push({data: { id: sourceValue + targetValue, source: sourceValue, target: targetValue,
+			        sourceLabel: sourceLabel, targetLabel: targetLabel, interaction: interaction, 
+					interactionType: type, n_exp: n_exp, color: edgeColor}});
 			
 		    drawNetwork();
 			
@@ -387,7 +391,7 @@ async function fetchJson() {
 // this is for cytoscape.js
  function drawNetwork() { 
 
-	var cy = cytoscape({ // variable cy is the graph?
+	var cy = cytoscape({ // variable cy is the graph
 	
 	  container: document.getElementById('cy'), // container to render in, plot appears here
 
@@ -395,6 +399,13 @@ async function fetchJson() {
 
 	  style: [ // the stylesheet for the graph
 		{
+		  selector: "core",
+          style: {
+            "selection-box-color": "#AAD8FF",
+            "selection-box-border-color": "#8BB0D0",
+            "selection-box-opacity": "0.5"
+          }
+        }, {
 		  selector: 'node',
 		  style: {
 			'background-color': 'data(color)',
@@ -412,6 +423,17 @@ async function fetchJson() {
             'border-color': '#283593'
 		  }
 		}, {
+          selector: "node[?attr]",
+          style: {
+            "shape": "rectangle",
+            "background-color": "#aaa",
+            "text-outline-color": "#aaa",
+            "width": "16px",
+            "height": "16px",
+            "font-size": "6px",
+            "z-index": "1"
+          }
+        },{
 		  selector: 'node:selected',
 		  style: {
 			"border-width": "6px",
@@ -434,22 +456,29 @@ async function fetchJson() {
 	  ],
 
 	  layout: {
-		name: 'concentric',
-	   //	rows: 1
+		name: 'cose'
 	  }
 
 	}); 
 	
+	// when a node is clicked
 	cy.on('tap', 'node', function(evt){
 		var node = evt.target;
-		var url = "https://www.uniprot.org/uniprot/" + node.id();
-		console.log(node.data("label") + ": " + url);
+		
+		//adding UniProt URL to the sidebar
+		var sideBar = document.getElementById('sidebar');
+        sideBar.innerHTML = node.data("label") + ": " + "https://www.uniprot.org/uniprot/" + node.id();
 		
     });
 	
 	cy.on('tap', 'edge', function(evt){
 		var edge = evt.target;
-		console.log("interaction type " + edge.data("interactionType"));
+		
+		// how to get the labels of the nodes from source and target values (ids??)
+		var sideBar = document.getElementById('sidebar');
+        sideBar.innerHTML = "Interaction between " + edge.data("sourceLabel") + " and " + edge.data("targetLabel") 
+		    + "\nNumber of experiments to support the existence of this interaction: " + edge.data("n_exp")
+			+ "\nType of this interaction: " + edge.data("interactionType");
     });
 	
 }
