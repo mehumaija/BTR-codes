@@ -537,6 +537,7 @@ WHERE {
 
 
 
+// THIS is the right logic
 // ^^the same but in more concise form
 PREFIX up: <http://purl.uniprot.org/core/>
 PREFIX GO: <http://purl.obolibrary.org/obo/GO_>
@@ -548,11 +549,11 @@ WHERE {
   ?protein1 up:interaction ?interaction.
   ?protein2 up:interaction ?interaction.
     
-  {?protein1 up:classifiedWith ?terms1.
-    VALUES ?terms1 {GO:0042698 GO:0032570}}
-  UNION
-  {?protein2 up:classifiedWith ?terms2.
-    VALUES ?terms2 {GO:0016917 GO:0007210 GO:0099589 GO:0006950}}
+  ?protein1 up:classifiedWith ?terms1.
+    VALUES ?terms1 {GO:0042698 GO:0032570}
+	
+  ?protein2 up:classifiedWith ?terms2.
+    VALUES ?terms2 {GO:0016917 GO:0007210 GO:0099589 GO:0006950}
 } 
 
 
@@ -638,6 +639,8 @@ SELECT DISTINCT
 	?interaction ?interactionType ?quality
 	(SUM(xsd:integer(?numOfExperiments)) AS ?strength)
 	(SAMPLE(?doiUrl) AS ?ref)
+    ?label1
+    ?label2
 WHERE {
 	?interaction rdf:type ?interactionType.
 	?interaction :quality ?quality.
@@ -650,7 +653,7 @@ WHERE {
 	  	FILTER REGEX(STR(?doi), "DOI:")
 	  	BIND(REPLACE(STR(?doi), "DOI:", "https://doi.org/") AS ?doiUrl)}
   
-	{ SELECT DISTINCT ?protein1 ?protein2 ?interaction
+	{ SELECT DISTINCT ?protein1 ?protein2 ?interaction ?label1 ?label2
 		WHERE {
 			?iso1 :interaction ?interaction.
 			?interaction :interactant ?iso2.
@@ -672,7 +675,7 @@ WHERE {
 					?iso2 :goBiologicalProcess ?GO2.
 					?GO2 :term ?GOterm2.
 					?GOterm2 :childOf ?terms2.
-					VALUES ?terms { cv:GO_0016917 cv:GO_0007210 cv:GO_0099589}
+					VALUES ?terms2 { cv:GO_0016917 cv:GO_0007210 cv:GO_0099589}
 
 					OPTIONAL
 					{
@@ -695,7 +698,7 @@ WHERE {
 		}
 	}
 }
-GROUP BY ?protein1 ?protein2 ?interaction ?interactionType ?quality
+GROUP BY ?protein1 ?protein2 ?interaction ?interactionType ?quality ?label1 ?label2
 
 
 

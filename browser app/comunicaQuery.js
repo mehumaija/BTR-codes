@@ -191,12 +191,11 @@ WHERE {
 }
 `
 
-//this works 
 queryInteractionsNP = `
 PREFIX : <http://nextprot.org/rdf#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX cv: <http://nextprot.org/rdf/terminology/>
-SELECT DISTINCT ?protein1 ?proteinLabel1 ?protein2 ?proteinLabel2 ?interaction ?interactionType ?numOfExperiments
+SELECT DISTINCT ?protein1 ?proteinLabel1 ?GOlabel1 ?protein2 ?proteinLabel2 ?GOlabel2 ?interaction ?interactionType ?strength
 WHERE {
   ?iso1 :interaction ?interaction.
   ?interaction :interactant ?iso2;
@@ -204,9 +203,9 @@ WHERE {
                :quality ?quality;
 			   :evidence ?evidence.			   
 			   
-  ?evidence :numberOfExperiments ?numOfExperiments.
+  ?evidence :numberOfExperiments ?strength.
 			  
-  ?iso1entry :isoform ?iso1;
+  ?entry1 :isoform ?iso1;
 			 :swissprotPage ?P1;
 			 :recommendedName ?name1.
   ?name1 :fullName ?proteinLabel1.
@@ -214,51 +213,61 @@ WHERE {
   ?iso2 :swissprotPage ?P2;
 		:recommendedName ?name2.
   ?name2 :fullName ?proteinLabel2.
+
   
   BIND(REPLACE(STR(?P1), "http://www.uniprot.org/uniprot/", "") as ?protein1)
   BIND(REPLACE(STR(?P2), "http://www.uniprot.org/uniprot/", "") as ?protein2)
   
-  {?protein :isoform ?iso1.
+  {
   ?iso1 :goBiologicalProcess ?GO.
-  ?GO :term ?GOterm.
+  ?GO :term ?GOterm;
+      rdfs:comment ?GOlabel1.
   ?GOterm :childOf cv:GO_0042698.}
 		UNION
-  {?protein :isoform ?iso1.
+  {
   ?iso1 :goBiologicalProcess ?GO.
-  ?GO :term ?GOterm.
+  ?GO :term ?GOterm;
+      rdfs:comment ?GOlabel1.
   ?GOterm :childOf cv:GO_0032570.}
         UNION
-  {?protein :isoform ?iso2.
+  {?entry2 :isoform ?iso2.
   ?iso2 :goMolecularFunction ?GO.
-  ?GO :term ?GOterm.
+  ?GO :term ?GOterm;
+      rdfs:comment ?GOlabel2.
   ?GOterm :childOf cv:GO_0016917.}
 		UNION
-  {?protein :isoform ?iso2.
+  {?entry2 :isoform ?iso2.
   ?iso2 :goBiologicalProcess ?GO.
-  ?GO :term ?GOterm.
+  ?GO :term ?GOterm;
+      rdfs:comment ?GOlabel2.
   ?GOterm :childOf cv:GO_0007210.}
 		UNION
-  {?protein :isoform ?iso2.
+  {?entry2 :isoform ?iso2.
   ?iso2 :goMolecularFunction ?GO.
-  ?GO :term ?GOterm.
+  ?GO :term ?GOterm;
+      rdfs:comment ?GOlabel2.
   ?GOterm :childOf cv:GO_0099589.}
 		UNION
-  {?protein :isoform ?iso2.
+  {?entry2 :isoform ?iso2.
   ?iso2 :disease ?disease.
-  ?disease :term cv:DI-00697.}
-} limit 10
+  ?disease :term cv:DI-00697;
+           rdfs:comment ?GOlabel2.}
+} limit 100
 `
 
+// add ?GO rdfs:comment ?GOlabel
+// add doi URLs
+// maybe add image iof the protein !?
 
-//works!
+//take the GOlabels out to get it working
 queryInteractionsUP = `
 PREFIX up: <http://purl.uniprot.org/core/>
 PREFIX GO: <http://purl.obolibrary.org/obo/GO_>
-SELECT DISTINCT ?protein1 ?proteinLabel1 ?protein2 ?proteinLabel2 ?interaction ?interactionType ?numOfExperiments
+SELECT DISTINCT ?protein1 ?proteinLabel1 ?GOlabel1 ?protein2 ?proteinLabel2 ?GOlabel2 ?interaction ?interactionType ?strength
 WHERE {
   ?interaction a up:Interaction;
                rdf:type ?interactionType;
-			   up:experiments ?numOfExperiments.
+			   up:experiments ?strength.
 			   
   ?P1 up:interaction ?interaction;
       rdfs:label ?proteinLabel1.
@@ -269,25 +278,200 @@ WHERE {
   BIND(REPLACE(STR(?P2), "http://purl.uniprot.org/uniprot/", "") as ?protein2)
   
   {?P1 a up:Protein;
-             up:classifiedWith GO:0042698.}
+             up:classifiedWith GO:0042698.
+   GO:0042698 rdfs:label ?GOlabel1.}
   UNION
   {?P1 a up:Protein;
-             up:classifiedWith GO:0032570.}
+             up:classifiedWith GO:0032570.
+   GO:0032570 rdfs:label ?GOlabel1.}
   UNION
   {?P2 a up:Protein;
-             up:classifiedWith GO:0016917.}
+             up:classifiedWith GO:0016917.
+   GO:0016917 rdfs:label ?GOlabel2.}
   UNION
   {?P2 a up:Protein;
-             up:classifiedWith GO:0007210.}
+             up:classifiedWith GO:0007210.
+   GO:0007210 rdfs:label ?GOlabel2.}
   UNION
   {?P2 a up:Protein;
-             up:classifiedWith GO:0099589.}
+             up:classifiedWith GO:0099589.
+   GO:0099589 rdfs:label ?GOlabel2.}
   UNION
   {?P2 a up:Protein;
-             up:classifiedWith GO:0006950.}
-} limit 10
+             up:classifiedWith GO:0006950.
+   GO:0006950 rdfs:label ?GOlabel2.}
+} limit 500
 `
 
+// with GOlabels
+queryAmmar = `
+PREFIX : <http://nextprot.org/rdf#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX cv: <http://nextprot.org/rdf/terminology/>
+SELECT DISTINCT 
+	?protein1
+    ?proteinLabel1
+    ?GOlabel1
+	?protein2
+    ?proteinLabel2
+    ?GOlabel2
+	?interaction ?interactionType ?quality
+	(SUM(xsd:integer(?numOfExperiments)) AS ?strength)
+	(SAMPLE(?doiUrl) AS ?ref)
+WHERE {
+	?interaction rdf:type ?interactionType;
+				 :quality ?quality;
+				 :evidence ?evidence.
+  	
+	{?evidence :numberOfExperiments ?numOfExperiments.}
+  	UNION {
+	  	?evidence :reference ?reference.
+  		?reference :from ?doi.
+	  	FILTER REGEX(STR(?doi), "DOI:")
+	  	BIND(REPLACE(STR(?doi), "DOI:", "https://doi.org/") AS ?doiUrl)}
+  
+	{ SELECT DISTINCT ?protein1 ?protein2 ?interaction ?GOlabel1 ?GOlabel2 ?proteinLabel1 ?proteinLabel2
+		WHERE {
+			?iso1 :interaction ?interaction.
+			?interaction :interactant ?iso2.
+		  
+            ?protein1 :swissprotPage ?P1;
+					  :recommendedName ?name1.
+		    ?name1 :fullName ?proteinLabel1.
+		  
+            ?protein2 :swissprotPage ?P2;
+					  :recommendedName ?name2.
+		    ?name2 :fullName ?proteinLabel2.
+			
+			    {?protein1 :isoform ?iso1.
+				?iso1 :goBiologicalProcess ?GO1.
+				?GO1 :term ?GOterm1.
+				?GOterm1 :childOf ?terms1.
+				VALUES ?terms1 { cv:GO_0042698 cv:GO_0032570 }
+				OPTIONAL
+				{
+					?GO1 rdfs:comment ?GOlabel1.
+				}
+				BIND ("PMDD" AS ?condition1)}
+
+			{
+			    ?protein2 :isoform ?iso2.
+				{  
+					?iso2 :goBiologicalProcess ?GO2.
+					?GO2 :term ?GOterm2.
+					?GOterm2 :childOf ?terms2.
+					VALUES ?terms2 { cv:GO_0016917 cv:GO_0007210 cv:GO_0099589}
+
+					OPTIONAL
+					{
+						?GO2 rdfs:comment ?GOlabel2.
+					}
+					BIND ("Depression related biological process" AS ?condition2)
+				}
+				UNION
+				{
+					?iso2 :disease ?disease2.
+					?disease2 :term cv:DI-00697.
+
+					OPTIONAL
+					{
+						?disease2 rdfs:comment ?GOlabel2.
+					}
+					BIND ("Depression related disease" AS ?condition2)	
+				}
+			}
+		}
+	}
+}
+GROUP BY ?protein1 ?protein2 ?interaction ?interactionType ?quality ?GOlabel1 ?GOlabel2 ?proteinLabel1 ?proteinLabel2
+` 
+
+queryAmmarEdited = `
+PREFIX : <http://nextprot.org/rdf#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX cv: <http://nextprot.org/rdf/terminology/>
+SELECT DISTINCT 
+	?protein1
+    ?proteinLabel1
+    ?GOlabel1
+	?protein2
+    ?proteinLabel2
+    ?GOlabel2
+	?interaction ?interactionType ?quality
+	(SUM(xsd:integer(?numOfExperiments)) AS ?strength)
+	(SAMPLE(?doiUrl) AS ?ref)
+WHERE {
+	?interaction rdf:type ?interactionType;
+				 :quality ?quality;
+				 :evidence ?evidence.
+  	
+	{?evidence :numberOfExperiments ?numOfExperiments.}
+  	UNION {
+	  	?evidence :reference ?reference.
+  		?reference :from ?doi.
+	  	FILTER REGEX(STR(?doi), "DOI:")
+	  	BIND(REPLACE(STR(?doi), "DOI:", "https://doi.org/") AS ?doiUrl)}
+  
+	{ SELECT DISTINCT ?protein1 ?protein2 ?interaction ?GOlabel1 ?GOlabel2 ?proteinLabel1 ?proteinLabel2
+		WHERE {
+			?iso1 :interaction ?interaction.
+			?interaction :interactant ?iso2.
+		  
+            ?protein1 :swissprotPage ?P1;
+					  :recommendedName ?name1.
+		    ?name1 :fullName ?proteinLabel1.
+		  
+            ?protein2 :swissprotPage ?P2;
+					  :recommendedName ?name2.
+		    ?name2 :fullName ?proteinLabel2.
+			
+			    {?protein1 :isoform ?iso1.
+				?iso1 :goBiologicalProcess ?GO1.
+				?GO1 :term ?GOterm1.
+				?GOterm1 :childOf cv:GO_0042698.
+				OPTIONAL
+				{
+					?GO1 rdfs:comment ?GOlabel1.
+				}
+				BIND ("PMDD" AS ?condition1)}
+
+			{
+			    ?protein2 :isoform ?iso2.
+				{  
+					?iso2 :goBiologicalProcess ?GO2.
+					?GO2 :term ?GOterm2.
+					?GOterm2 :childOf cv:GO_0007210.
+
+					OPTIONAL
+					{
+						?GO2 rdfs:comment ?GOlabel2.
+					}
+					BIND ("Depression related biological process" AS ?condition2)
+				}
+				UNION
+				{
+					?iso2 :disease ?disease2.
+					?disease2 :term cv:DI-00697.
+
+					OPTIONAL
+					{
+						?disease2 rdfs:comment ?GOlabel2.
+					}
+					BIND ("Depression related disease" AS ?condition2)	
+				}
+			}
+		}
+	}
+}
+GROUP BY ?protein1 ?protein2 ?interaction ?interactionType ?quality ?GOlabel1 ?GOlabel2 ?proteinLabel1 ?proteinLabel2
+` 
+
+
+
+
+// add filter(protein1 = protein2 ) to check how many proteins are the same in both conditions
 
 
 // SOURCES
@@ -309,8 +493,13 @@ NP.push({type: "sparql", value: "https://api.nextprot.org/sparql"});
 
 // FUNCTIONS
 
+
+//source values are the proteins associated with GO terms that are associated with the menstrual cycle according to literature
+//target values are the proteins associated with GO terms that are associated with depression according 
 var sourceValues = [];
 var targetValues = [];
+var elementsListOnlyIDs = [];
+
 
 //conducting the query and drawing the nodes inside of it
 // call the function two times with the source in the argument
@@ -318,34 +507,46 @@ async function fetchResults(query, source) {
 	
 	myEngine.query(query, {sources: source,}) // only need to change the query and sources variables if want to alter the query
 		.then(function (result) {
+			console.log("getting data");
 		result.bindingsStream.on('data', function (data) {
 			// Each variable binding is an RDFJS term
+			console.log("getting values");
 			sourceValue = data.get('?protein1').value; //female endocrine control related in all queries
 			sourceValues.push(sourceValue);
 			targetValue = data.get('?protein2').value; //depression related in all queries
 			targetValues.push(targetValue);
 			interaction = data.get("?interaction").value;
 			type = data.get('?interactionType').value;
-			n_exp = data.get('?numOfExperiments').value;
+			strength = data.get('?strength').value;
 			sourceLabel = data.get('?proteinLabel1').value;
-			targetLabel = data.get('?proteinLabel2').value;
+			targetLabel = data.get('?proteinLabel2').value; 
+			GOlabel2 = data.get("?GOlabel2").value;
+		    GOlabel1 = data.get("?GOlabel1").value;
+			quality = data.get("?quality").value;
+			ref = data.get("?ref").value;
+
+			// checking if the node already exists and adding it to the elements if it doesn't. Assigning color accrdingly.
+			// Red = PMDD related biological process. Blue = depression related biological process. Purple = related to both.
+			if (!elementsListOnlyIDs.includes(sourceValue)) {
+				
+				if (targetValues.includes(sourceValue)) {
+					elementsList.push({data: {id: sourceValue, label: sourceLabel, GOlabel: GOlabel1, color: "purple"}});
+			    } else {
+					elementsList.push({data: {id: sourceValue, label: sourceLabel, GOlabel: GOlabel1, color: "red"}});
+				}
+				elementsListOnlyIDs.push(sourceValue);
+			}
 			
-			if (!elementsList.includes(sourceValue)) {
-				elementsList.push({data: {id: sourceValue, label: sourceLabel, color: "red"}});
-			}
-			if (!elementsList.includes(targetValue)) {
-				elementsList.push({data: {id: targetValue, label: targetLabel, color: "blue"}});
-			}
-			
-			if (targetValues.includes(sourceValue)) {
-				var itemInBoth = elementsList.find(item => item.data.id = sourceValue);
-				itemInBoth.data.color = "purple";
-			}
-			if (sourceValues.includes(targetValue)) {
-				var itemInBoth = elementsList.find(item => item.data.id = targetValue);
-				itemInBoth.data.color = "purple";
+			if (!elementsListOnlyIDs.includes(targetValue)) {
+				if (sourceValues.includes(targetValue)) {
+					elementsList.push({data: {id: targetValue, label: targetLabel, GOlabel: GOlabel2, color: "purple"}});
+			    } else {
+					elementsList.push({data: {id: targetValue, label: targetLabel, GOlabel: GOlabel2, color: "blue"}});
+				}
+				elementsListOnlyIDs.push(targetValue);
 			}
 			
+			// assigning edge color according to the interaction type
 			var edgeColor;
 			if (type == "http://nextprot.org/rdf#BinaryInteraction") {
 				edgeColor = "brown"; 
@@ -357,16 +558,24 @@ async function fetchResults(query, source) {
 				edgeColor = "#ccc";
 			}
 			
+			// interactions repeated in the different
+			if (sourceValue != null || sourceValue != "" || targetValue != null || targetValue != "") {
 			elementsList.push({data: { id: sourceValue + targetValue, source: sourceValue, target: targetValue,
 			        sourceLabel: sourceLabel, targetLabel: targetLabel, interaction: interaction, 
-					interactionType: type, n_exp: n_exp, color: edgeColor}});
-			
-		    drawNetwork();
+					interactionType: type, strength: strength, color: edgeColor}});
+			}
 			
 		});
-				
+		result.bindingsStream.on('end', () => {
+			console.log("query done");
+    		drawNetwork();
+		});
+		result.bindingsStream.on('error', (error) => {
+			console.error(error);
+		});
+			
 	});
-	
+		
 }
 
 
@@ -390,7 +599,7 @@ async function fetchJson() {
 
 // this is for cytoscape.js
  function drawNetwork() { 
-
+	console.log("drawing network " + elementsList.length);
 	var cy = cytoscape({ // variable cy is the graph
 	
 	  container: document.getElementById('cy'), // container to render in, plot appears here
@@ -467,18 +676,20 @@ async function fetchJson() {
 		
 		//adding UniProt URL to the sidebar
 		var sideBar = document.getElementById('sidebar');
-        sideBar.innerHTML = node.data("label") + ": " + "https://www.uniprot.org/uniprot/" + node.id();
+		var uniprotlink = "https://www.uniprot.org/uniprot/" + node.id();
+        sideBar.innerHTML = node.data("label") + ": " + "<a target=\"_blank\" href=\""+uniprotlink+"\" >" + uniprotlink + "</a>"; //how to make a link??
 		
     });
 	
+	// when an edge is clicked
 	cy.on('tap', 'edge', function(evt){
 		var edge = evt.target;
 		
-		// how to get the labels of the nodes from source and target values (ids??)
+		// adding information about the clicked edge
 		var sideBar = document.getElementById('sidebar');
-        sideBar.innerHTML = "Interaction between " + edge.data("sourceLabel") + " and " + edge.data("targetLabel") 
-		    + "\nNumber of experiments to support the existence of this interaction: " + edge.data("n_exp")
-			+ "\nType of this interaction: " + edge.data("interactionType");
+        sideBar.innerHTML = "Interaction between " + edge.data("sourceLabel") + " and " + edge.data("targetLabel")
+		    + "<br>Number of experiments to support the existence of this interaction: " + edge.data("strength")
+		    + "<br>Type of this interaction: " + edge.data("interactionType");
     });
-	
+
 }
