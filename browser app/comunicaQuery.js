@@ -300,7 +300,7 @@ WHERE {
   {?P2 a up:Protein;
              up:classifiedWith GO:0006950.
    GO:0006950 rdfs:label ?GOlabel2.}
-} limit 500
+} limit 100
 `
 
 // with GOlabels
@@ -430,7 +430,8 @@ WHERE {
 			    {?protein1 :isoform ?iso1.
 				?iso1 :goBiologicalProcess ?GO1.
 				?GO1 :term ?GOterm1.
-				?GOterm1 :childOf cv:GO_0042698.
+				?GOterm1 :childOf ?terms1.
+				VALUES ?terms1 { cv:GO_0042698 cv:GO_0032570 cv:GO_0043627 cv:GO_0008210 cv:GO_0042448 cv:GO_2000870}
 				OPTIONAL
 				{
 					?GO1 rdfs:comment ?GOlabel1.
@@ -442,7 +443,8 @@ WHERE {
 				{  
 					?iso2 :goBiologicalProcess ?GO2.
 					?GO2 :term ?GOterm2.
-					?GOterm2 :childOf cv:GO_0007210.
+					?GOterm2 :childOf ?terms2.
+					VALUES ?terms2 { cv:GO_0016917 cv:GO_0007210 cv:GO_0099589 cv:GO_0014051 cv:GO_0106040}
 
 					OPTIONAL
 					{
@@ -466,8 +468,101 @@ WHERE {
 	}
 }
 GROUP BY ?protein1 ?protein2 ?interaction ?interactionType ?quality ?GOlabel1 ?GOlabel2 ?proteinLabel1 ?proteinLabel2
+`
+
+queryAmmarUP = `
+PREFIX up: <http://purl.uniprot.org/core/>
+PREFIX GO: <http://purl.obolibrary.org/obo/GO_>
+SELECT ?protein1 ?protein2 ?interaction ?interactionType ?numOfExperiments
+WHERE {
+  ?interaction a up:Interaction;
+               rdf:type ?interactionType;
+               up:experiments ?numOfExperiments.
+  ?protein1 up:interaction ?interaction.
+  ?protein2 up:interaction ?interaction.
+    
+  ?protein1 up:classifiedWith ?terms1.
+    VALUES ?terms1 {GO:0042698 GO:0032570 GO:0043627 GO:0008210 GO:0042448 GO:2000870}
+	
+  ?protein2 up:classifiedWith ?terms2.
+    VALUES ?terms2 {GO:0016917 GO:0007210 GO:0099589 GO:0006950 GO:0014051 GO:0106040}
+} 
 ` 
 
+
+finalQuery = `
+PREFIX : <http://nextprot.org/rdf#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX cv: <http://nextprot.org/rdf/terminology/>
+SELECT DISTINCT 
+	?protein1
+    ?proteinLabel1
+    ?GOlabel1
+	?protein2
+    ?proteinLabel2
+    ?GOlabel2
+	?interaction ?interactionType ?quality
+	(SUM(xsd:integer(?numOfExperiments)) AS ?strength)
+	(SAMPLE(?doiUrl) AS ?ref)
+    ?UP1
+    ?UP2
+WHERE {
+	?interaction rdf:type ?interactionType;
+				 :quality ?quality;
+				 :evidence ?evidence.
+  	
+	{?evidence :numberOfExperiments ?numOfExperiments.}
+  	UNION {
+	  	?evidence :reference ?reference.
+  		?reference :from ?doi.
+	  	FILTER REGEX(STR(?doi), "DOI:")
+	  	BIND(REPLACE(STR(?doi), "DOI:", "https://doi.org/") AS ?doiUrl)}
+  
+	{ SELECT DISTINCT ?protein1 ?protein2 ?interaction ?GOlabel1 ?GOlabel2 ?proteinLabel1 ?proteinLabel2 ?UP1 ?UP2
+		WHERE {
+			?iso1 :interaction ?interaction.
+			?interaction :interactant ?iso2.
+		  
+            ?protein1 :swissprotPage ?P1;
+					  :recommendedName ?name1.
+		    ?name1 :fullName ?proteinLabel1.
+		  
+            ?protein2 :swissprotPage ?P2;
+					  :recommendedName ?name2.
+		    ?name2 :fullName ?proteinLabel2.
+		  
+		    BIND(REPLACE(STR(?P1), "http://www.uniprot.org/uniprot/", "") as ?UP1)
+            BIND(REPLACE(STR(?P2), "http://www.uniprot.org/uniprot/", "") as ?UP2)
+			
+			    {?protein1 :isoform ?iso1.
+				?iso1 :goBiologicalProcess ?GO1.
+				?GO1 :term ?GOterm1.
+				?GOterm1 :childOf ?terms1.
+				VALUES ?terms1 { cv:GO_0042698 cv:GO_0032570 cv:GO_0043627 cv:GO_0008210 cv:GO_0042448 cv:GO_2000870 cv:GO_0042703 cv:GO_0044850}
+				OPTIONAL {?GO1 rdfs:comment ?GOlabel1.}
+				}
+
+			{
+			    ?protein2 :isoform ?iso2.
+				{  
+					?iso2 :goBiologicalProcess ?GO2.
+					?GO2 :term ?GOterm2.
+					?GOterm2 :childOf ?terms2.
+					VALUES ?terms2 { cv:GO_0016917 cv:GO_0007210 cv:GO_0099589 cv:GO_0014051 cv:GO_0106040 cv:GO_1903350 cv:GO_0051610}
+
+					OPTIONAL {?GO2 rdfs:comment ?GOlabel2.}
+				}
+				UNION 
+			       {?iso2 :disease ?disease2.
+					?disease2 :term cv:DI-00697.
+
+					OPTIONAL{?disease2 rdfs:comment ?GOlabel2.}}
+			}
+		}
+	}
+} GROUP BY ?protein1 ?protein2 ?interaction ?interactionType ?quality ?GOlabel1 ?GOlabel2 ?proteinLabel1 ?proteinLabel2 ?UP1 ?UP2
+`
 
 
 
@@ -519,51 +614,25 @@ async function fetchResults(query, source) {
 			type = data.get('?interactionType').value;
 			strength = data.get('?strength').value;
 			sourceLabel = data.get('?proteinLabel1').value;
-			targetLabel = data.get('?proteinLabel2').value; 
-			GOlabel2 = data.get("?GOlabel2").value;
-		    GOlabel1 = data.get("?GOlabel1").value;
-			quality = data.get("?quality").value;
-			ref = data.get("?ref").value;
+			targetLabel = data.get('?proteinLabel2').value;
+			
+			if (data.get("?GOlabel2") != undefined) {
+				GOlabel2 = data.get("?GOlabel2").value;
+			} else {
+				GOlabel2 = "";
+			}
+			if (data.get("?GOlabel1") != undefined) {
+				GOlabel1 = data.get("?GOlabel1").value;
+			} else {
+				GOlabel1 = "";
+			}
+			
+			//quality = data.get("?quality").value;
+			//ref = data.get("?ref").value;
 
 			// checking if the node already exists and adding it to the elements if it doesn't. Assigning color accrdingly.
 			// Red = PMDD related biological process. Blue = depression related biological process. Purple = related to both.
-			if (!elementsListOnlyIDs.includes(sourceValue)) {
-				
-				if (targetValues.includes(sourceValue)) {
-					elementsList.push({data: {id: sourceValue, label: sourceLabel, GOlabel: GOlabel1, color: "purple"}});
-			    } else {
-					elementsList.push({data: {id: sourceValue, label: sourceLabel, GOlabel: GOlabel1, color: "red"}});
-				}
-				elementsListOnlyIDs.push(sourceValue);
-			}
-			
-			if (!elementsListOnlyIDs.includes(targetValue)) {
-				if (sourceValues.includes(targetValue)) {
-					elementsList.push({data: {id: targetValue, label: targetLabel, GOlabel: GOlabel2, color: "purple"}});
-			    } else {
-					elementsList.push({data: {id: targetValue, label: targetLabel, GOlabel: GOlabel2, color: "blue"}});
-				}
-				elementsListOnlyIDs.push(targetValue);
-			}
-			
-			// assigning edge color according to the interaction type
-			var edgeColor;
-			if (type == "http://nextprot.org/rdf#BinaryInteraction") {
-				edgeColor = "brown"; 
-			} else if (type == "http://purl.uniprot.org/core/Interaction") {
-				edgeColor = "orange";
-			} else if (type == "http://purl.uniprot.org/core/Non_Self_Interaction"){
-				edgeColor = "yellow";
-			}else {
-				edgeColor = "#ccc";
-			}
-			
-			// interactions repeated in the different
-			if (sourceValue != null || sourceValue != "" || targetValue != null || targetValue != "") {
-			elementsList.push({data: { id: sourceValue + targetValue, source: sourceValue, target: targetValue,
-			        sourceLabel: sourceLabel, targetLabel: targetLabel, interaction: interaction, 
-					interactionType: type, strength: strength, color: edgeColor}});
-			}
+			resultsToList(sourceValue, sourceLabel, GOlabel1, targetValue, targetLabel, GOlabel2, interaction, type, strength);
 			
 		});
 		result.bindingsStream.on('end', () => {
@@ -579,10 +648,52 @@ async function fetchResults(query, source) {
 }
 
 
-// to serialize the data while executing query 
-async function fetchJson() {
+function resultsToList(sourceValue, sourceLabel, GOlabel1, UP1, targetValue, targetLabel, GOlabel2, UP2, interaction, type, strength) {
+	
+	if (!elementsListOnlyIDs.includes(sourceValue)) {		
+		if (targetValues.includes(sourceValue)) {
+			elementsList.push({data: {id: sourceValue, label: sourceLabel, GOlabel: GOlabel1, uniprot: UP1, color: "purple"}});
+	    } else {
+			elementsList.push({data: {id: sourceValue, label: sourceLabel, GOlabel: GOlabel1, uniprot: UP1, color: "red"}});
+		}
+		elementsListOnlyIDs.push(sourceValue);
+	}
+			
+	if (!elementsListOnlyIDs.includes(targetValue)) {
+		if (sourceValues.includes(targetValue)) {
+			elementsList.push({data: {id: targetValue, label: targetLabel, GOlabel: GOlabel2, uniprot: UP2, color: "purple"}});
+		} else {
+			elementsList.push({data: {id: targetValue, label: targetLabel, GOlabel: GOlabel2, uniprot: UP2, color: "blue"}});
+		}
+		elementsListOnlyIDs.push(targetValue);
+	}
+			
+			// assigning edge color according to the interaction type
+	var edgeColor;
+	if (type == "http://nextprot.org/rdf#BinaryInteraction") {
+		edgeColor = "brown"; 
+	} else if (type == "http://purl.uniprot.org/core/Interaction") {
+		edgeColor = "orange";
+	} else if (type == "http://purl.uniprot.org/core/Non_Self_Interaction"){
+		edgeColor = "yellow";
+	} else {
+		edgeColor = "#ccc";
+	}
+			
+	if (sourceValue != null || sourceValue != "" || targetValue != null || targetValue != "") {
+	    elementsList.push({data: { id: sourceValue + targetValue, source: sourceValue, target: targetValue,
+			    sourceLabel: sourceLabel, targetLabel: targetLabel, interaction: interaction, 
+			    interactionType: type, strength: strength, color: edgeColor}});
+	}
+}
 
-    const results = await myEngine.query(query3, {sources: sources,});
+
+
+
+// to serialize the data while executing query 
+async function fetchJson(query, source) {
+
+    const results = await myEngine.query(query, {sources: source,});
 
     const data = await myEngine.resultToString(results,
       'application/sparql-results+json', results.context);
@@ -594,6 +705,44 @@ async function fetchJson() {
     data.data.on('end', () => {
     console.log(dataJSON)
     })
+}
+
+//gets elements from a local JSON file
+function readJson(jsonFile) {
+	fetch(jsonFile)
+		.then(response => response.json())
+	    .then(data => {
+			var bindings = data.results.bindings;
+			console.log(bindings);
+			for (i = 0; i < bindings.length; i++) {
+				sourceValue = bindings[i].protein1.value; //female endocrine control related in all queries
+				sourceValues.push(sourceValue);
+				targetValue = bindings[i].protein2.value; //depression related in all queries
+				targetValues.push(targetValue);
+				interaction = bindings[i].interaction.value;
+				type = bindings[i].interactionType.value;
+				strength = bindings[i].strength.value;
+				sourceLabel = bindings[i].proteinLabel1.value;
+				targetLabel = bindings[i].proteinLabel2.value;
+				UP1 = bindings[i].UP1.value;
+				UP2 = bindings[i].UP2.value;
+				
+				if (bindings[i].GOlabel1 != undefined) {
+					GOlabel1 = bindings[i].GOlabel1.value;
+				} else {
+					GOlabel1 = "";
+				}
+				
+				if (bindings[i].GOlabel2 != undefined) {
+					GOlabel2 = bindings[i].GOlabel2.value;
+				} else {
+					GOlabel2 = "";
+				}
+				
+				resultsToList(sourceValue, sourceLabel, GOlabel1, UP1, targetValue, targetLabel, GOlabel2, UP2, interaction, type, strength);
+			}
+			drawNetwork();
+		});
 }
 
 
@@ -655,7 +804,7 @@ async function fetchJson() {
 		{
 		  selector: 'edge',
 		  style: {
-			'width': 'data(n_exp)',
+			'width': 'data(strength)',
 			'line-color': 'data(color)',
 			'target-arrow-color': '#ccc',
 			'target-arrow-shape': 'none',
@@ -676,8 +825,9 @@ async function fetchJson() {
 		
 		//adding UniProt URL to the sidebar
 		var sideBar = document.getElementById('sidebar');
-		var uniprotlink = "https://www.uniprot.org/uniprot/" + node.id();
-        sideBar.innerHTML = node.data("label") + ": " + "<a target=\"_blank\" href=\""+uniprotlink+"\" >" + uniprotlink + "</a>"; //how to make a link??
+		var uniprotlink = "https://www.uniprot.org/uniprot/" + node.data('uniprot');
+        sideBar.innerHTML = node.data("label") + ": " + "<a target=\"_blank\" href=\""+uniprotlink+"\" >" + uniprotlink + "</a>"
+		    + "<br>Gene Ontology: " + node.data('GOlabel');
 		
     });
 	

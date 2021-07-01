@@ -27,7 +27,7 @@
   </style>
   
   <head>
-    <title>Web Browser App</title>
+    <title>PPI app</title>	
 	<!--Comunica-->
 	<script src="http://rdf.js.org/comunica-browser/versions/1/packages/actor-init-sparql/comunica-browser.js"></script>
 	<!-- Initialize a global WBK function, wikidata for fetch  -->
@@ -51,8 +51,10 @@
 	  <div id="cy"></div>
 	    <script>
 	      //fetchResults(queryInteractionsUP, UP);
-	      fetchResults(queryAmmar, NP);
-	      console.log(elementsList);
+	      //fetchResults(queryAmmar, NP);
+		  //fetchJson(queryAmmarEdited, NP);
+		  readJson("NPinteractions2.json");
+		  console.log(elementsList);
 	    </script>
 	</div>
 		
