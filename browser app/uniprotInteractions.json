@@ -1,0 +1,253 @@
+{
+  "head" : {
+    "vars" : [
+      "protein1",
+      "proteinLabel1",
+      "GOlabel1",
+      "protein2",
+      "proteinLabel2",
+      "GOlabel2",
+      "interaction",
+      "interactionType",
+      "strength"
+    ]
+  },
+  "results" : {
+    "bindings" : [
+      {
+        "strength" : {
+          "datatype" : "http://www.w3.org/2001/XMLSchema#int",
+          "type" : "literal",
+          "value" : "4"
+        },
+        "GOlabel1" : {
+          "type" : "literal",
+          "value" : "response to progesterone"
+        },
+        "interactionType" : {
+          "type" : "uri",
+          "value" : "http://purl.uniprot.org/core/Interaction"
+        },
+        "GOlabel2" : {
+          "type" : "literal",
+          "value" : "GABA-A receptor activity"
+        },
+        "protein1" : {
+          "type" : "uri",
+          "value" : "http://purl.uniprot.org/uniprot/Q63787"
+        },
+        "interaction" : {
+          "type" : "uri",
+          "value" : "http://purl.uniprot.org/intact/518443-6258192"
+        },
+        "protein2" : {
+          "type" : "uri",
+          "value" : "http://purl.uniprot.org/uniprot/P62813"
+        },
+        "proteinLabel2" : {
+          "type" : "literal",
+          "value" : "Gamma-aminobutyric acid receptor subunit alpha-1"
+        },
+        "proteinLabel1" : {
+          "type" : "literal",
+          "value" : "Phosphatidylinositol 3-kinase regulatory subunit alpha"
+        }
+      },
+      {
+        "strength" : {
+          "datatype" : "http://www.w3.org/2001/XMLSchema#int",
+          "type" : "literal",
+          "value" : "4"
+        },
+        "GOlabel1" : {
+          "type" : "literal",
+          "value" : "response to progesterone"
+        },
+        "interactionType" : {
+          "type" : "uri",
+          "value" : "http://purl.uniprot.org/core/Non_Self_Interaction"
+        },
+        "GOlabel2" : {
+          "type" : "literal",
+          "value" : "GABA-A receptor activity"
+        },
+        "protein1" : {
+          "type" : "uri",
+          "value" : "http://purl.uniprot.org/uniprot/Q63787"
+        },
+        "interaction" : {
+          "type" : "uri",
+          "value" : "http://purl.uniprot.org/intact/518443-6258192"
+        },
+        "protein2" : {
+          "type" : "uri",
+          "value" : "http://purl.uniprot.org/uniprot/P62813"
+        },
+        "proteinLabel2" : {
+          "type" : "literal",
+          "value" : "Gamma-aminobutyric acid receptor subunit alpha-1"
+        },
+        "proteinLabel1" : {
+          "type" : "literal",
+          "value" : "Phosphatidylinositol 3-kinase regulatory subunit alpha"
+        }
+      },
+      {
+        "strength" : {
+          "datatype" : "http://www.w3.org/2001/XMLSchema#int",
+          "type" : "literal",
+          "value" : "4"
+        },
+        "GOlabel1" : {
+          "type" : "literal",
+          "value" : "response to estrogen"
+        },
+        "interactionType" : {
+          "type" : "uri",
+          "value" : "http://purl.uniprot.org/core/Interaction"
+        },
+        "GOlabel2" : {
+          "type" : "literal",
+          "value" : "serotonin binding"
+        },
+        "protein1" : {
+          "type" : "uri",
+          "value" : "http://purl.uniprot.org/uniprot/Q9Z0J4"
+        },
+        "interaction" : {
+          "type" : "uri",
+          "value" : "http://purl.uniprot.org/intact/397596-15633326"
+        },
+        "protein2" : {
+          "type" : "uri",
+          "value" : "http://purl.uniprot.org/uniprot/Q60857"
+        },
+        "proteinLabel2" : {
+          "type" : "literal",
+          "value" : "Sodium-dependent serotonin transporter"
+        },
+        "proteinLabel1" : {
+          "type" : "literal",
+          "value" : "Nitric oxide synthase, brain"
+        }
+      },
+      {
+        "strength" : {
+          "datatype" : "http://www.w3.org/2001/XMLSchema#int",
+          "type" : "literal",
+          "value" : "4"
+        },
+        "GOlabel1" : {
+          "type" : "literal",
+          "value" : "response to estrogen"
+        },
+        "interactionType" : {
+          "type" : "uri",
+          "value" : "http://purl.uniprot.org/core/Non_Self_Interaction"
+        },
+        "GOlabel2" : {
+          "type" : "literal",
+          "value" : "serotonin binding"
+        },
+        "protein1" : {
+          "type" : "uri",
+          "value" : "http://purl.uniprot.org/uniprot/Q9Z0J4"
+        },
+        "interaction" : {
+          "type" : "uri",
+          "value" : "http://purl.uniprot.org/intact/397596-15633326"
+        },
+        "protein2" : {
+          "type" : "uri",
+          "value" : "http://purl.uniprot.org/uniprot/Q60857"
+        },
+        "proteinLabel2" : {
+          "type" : "literal",
+          "value" : "Sodium-dependent serotonin transporter"
+        },
+        "proteinLabel1" : {
+          "type" : "literal",
+          "value" : "Nitric oxide synthase, brain"
+        }
+      },
+      {
+        "strength" : {
+          "datatype" : "http://www.w3.org/2001/XMLSchema#int",
+          "type" : "literal",
+          "value" : "4"
+        },
+        "GOlabel1" : {
+          "type" : "literal",
+          "value" : "response to progesterone"
+        },
+        "interactionType" : {
+          "type" : "uri",
+          "value" : "http://purl.uniprot.org/core/Non_Self_Interaction"
+        },
+        "GOlabel2" : {
+          "type" : "literal",
+          "value" : "GABA-A receptor complex"
+        },
+        "protein1" : {
+          "type" : "uri",
+          "value" : "http://purl.uniprot.org/uniprot/Q63787"
+        },
+        "interaction" : {
+          "type" : "uri",
+          "value" : "http://purl.uniprot.org/intact/518443-6258192"
+        },
+        "protein2" : {
+          "type" : "uri",
+          "value" : "http://purl.uniprot.org/uniprot/P62813"
+        },
+        "proteinLabel2" : {
+          "type" : "literal",
+          "value" : "Gamma-aminobutyric acid receptor subunit alpha-1"
+        },
+        "proteinLabel1" : {
+          "type" : "literal",
+          "value" : "Phosphatidylinositol 3-kinase regulatory subunit alpha"
+        }
+      },
+      {
+        "strength" : {
+          "datatype" : "http://www.w3.org/2001/XMLSchema#int",
+          "type" : "literal",
+          "value" : "4"
+        },
+        "GOlabel1" : {
+          "type" : "literal",
+          "value" : "response to progesterone"
+        },
+        "interactionType" : {
+          "type" : "uri",
+          "value" : "http://purl.uniprot.org/core/Interaction"
+        },
+        "GOlabel2" : {
+          "type" : "literal",
+          "value" : "GABA-A receptor complex"
+        },
+        "protein1" : {
+          "type" : "uri",
+          "value" : "http://purl.uniprot.org/uniprot/Q63787"
+        },
+        "interaction" : {
+          "type" : "uri",
+          "value" : "http://purl.uniprot.org/intact/518443-6258192"
+        },
+        "protein2" : {
+          "type" : "uri",
+          "value" : "http://purl.uniprot.org/uniprot/P62813"
+        },
+        "proteinLabel2" : {
+          "type" : "literal",
+          "value" : "Gamma-aminobutyric acid receptor subunit alpha-1"
+        },
+        "proteinLabel1" : {
+          "type" : "literal",
+          "value" : "Phosphatidylinositol 3-kinase regulatory subunit alpha"
+        }
+      }
+    ]
+  }
+}

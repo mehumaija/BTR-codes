@@ -736,6 +736,7 @@ function readJson(jsonFile) {
 		.then(response => response.json())
 	    .then(data => {
 			var bindings = data.results.bindings;
+			var vars = data.head.vars;
 			console.log(bindings);
 			for (i = 0; i < bindings.length; i++) {
 				sourceValue = bindings[i].protein1.value; //female endocrine control related in all queries
@@ -747,22 +748,27 @@ function readJson(jsonFile) {
 				strength = bindings[i].strength.value;
 				sourceLabel = bindings[i].proteinLabel1.value;
 				targetLabel = bindings[i].proteinLabel2.value;
-				UP1 = bindings[i].UP1.value;
-				UP2 = bindings[i].UP2.value;
-				quality = bindings[i].quality.value;
+				GOlabel1 = bindings[i].GOlabel1.value;
+				GOlabel2 = bindings[i].GOlabel2.value;
 				
-				if (bindings[i].GOlabel1 != undefined) {
-					GOlabel1 = bindings[i].GOlabel1.value;
+				if (vars.includes('quality')) {
+					quality = bindings[i].quality.value;
 				} else {
-					GOlabel1 = "";
+					quality = 0;
+				}
+
+				if (vars.includes("UP1")) {
+					UP1 = "https://www.uniprot.org/uniprot/" + bindings[i].UP1.value;
+				} else {
+					UP1 = sourceValue;
 				}
 				
-				if (bindings[i].GOlabel2 != undefined) {
-					GOlabel2 = bindings[i].GOlabel2.value;
+				if (vars.includes("UP2")) {
+					UP2 = "https://www.uniprot.org/uniprot/" + bindings[i].UP2.value;
 				} else {
-					GOlabel2 = "";
+					UP2 = targetValue;
 				}
-				
+
 				resultsToList(sourceValue, sourceLabel, GOlabel1, UP1, targetValue, targetLabel, GOlabel2, UP2, interaction, type, strength, quality);
 			}
 			drawNetwork();
@@ -849,7 +855,7 @@ function readJson(jsonFile) {
 		
 		//adding UniProt URL to the sidebar
 		var sideBar = document.getElementById('sidebar');
-		var uniprotlink = "https://www.uniprot.org/uniprot/" + node.data('uniprot');
+		var uniprotlink = node.data('uniprot');
         sideBar.innerHTML = node.data("label") + ": " + "<a target=\"_blank\" href=\""+uniprotlink+"\" >" + uniprotlink + "</a>"
 		    + "<br>Gene Ontology: " + node.data('GOlabel');
 		
