@@ -536,11 +536,19 @@ WHERE {
             BIND(REPLACE(STR(?P2), "http://www.uniprot.org/uniprot/", "") as ?UP2)
 			
 			    {?protein1 :isoform ?iso1.
-				?iso1 :goBiologicalProcess ?GO1.
+				 
+				{?iso1 :goBiologicalProcess ?GO1.
 				?GO1 :term ?GOterm1.
 				?GOterm1 :childOf ?terms1.
-				VALUES ?terms1 { cv:GO_0042698 cv:GO_0032570 cv:GO_0043627 cv:GO_0008210 cv:GO_0042448 cv:GO_2000870 cv:GO_0042703 cv:GO_0044850}
-				OPTIONAL {?GO1 rdfs:comment ?GOlabel1.}
+				VALUES ?terms1 { cv:GO_0042698 cv:GO_0032570 cv:GO_0043627 cv:GO_0008210 cv:GO_0042448 cv:GO_2000870 cv:GO_0042703 cv:GO_0044850 cv:GO_0030728}
+				OPTIONAL {?GO1 rdfs:comment ?GOlabel1.}}
+				
+				 UNION
+				 {?iso1 :goMolecularFunction ?GO1.
+				 ?GO1 :term ?GOterm1.
+				 ?GOterm1 :childOf ?terms11.
+				 VALUES ?terms11 {cv:GO_0099130 cv:GO_0030284 cv:GO_0033142}
+				 OPTIONAL {?GO1 rdfs:comment ?GOlabel1.}}
 				}
 
 			{
@@ -550,10 +558,25 @@ WHERE {
 					?GO2 :term ?GOterm2.
 					?GOterm2 :childOf ?terms2.
 					VALUES ?terms2 { cv:GO_0016917 cv:GO_0007210 cv:GO_0099589 cv:GO_0014051 cv:GO_0106040 cv:GO_1903350 cv:GO_0051610}
-
 					OPTIONAL {?GO2 rdfs:comment ?GOlabel2.}
 				}
-				UNION 
+			   
+			  UNION {
+				?iso2 :goMolecularFunction ?GO2.
+				 ?GO2 :term ?GOterm2.
+				 ?GOterm2 :childOf ?terms22.
+				 VALUES ?terms22 {cv:GO_0004890 cv:GO_0051378 cv:GO_0035240}
+				 OPTIONAL {?GO2 rdfs:comment ?GOlabel2.}
+				}
+				
+			  			  UNION {
+				?iso2 :goCellularComponent ?GO2.
+				  ?GO2 :term ?GOterm2.
+				  ?GOterm2 :childOf ?terms222.
+				  VALUES ?terms222 {cv:GO_1902711 cv:GO_0098665}
+				  OPTIONAL {?GO2 rdfs:comment ?GOlabel1.}
+				}
+			  UNION 
 			       {?iso2 :disease ?disease2.
 					?disease2 :term cv:DI-00697.
 
@@ -648,7 +671,7 @@ async function fetchResults(query, source) {
 }
 
 
-function resultsToList(sourceValue, sourceLabel, GOlabel1, UP1, targetValue, targetLabel, GOlabel2, UP2, interaction, type, strength) {
+function resultsToList(sourceValue, sourceLabel, GOlabel1, UP1, targetValue, targetLabel, GOlabel2, UP2, interaction, type, strength, quality) {
 	
 	if (!elementsListOnlyIDs.includes(sourceValue)) {		
 		if (targetValues.includes(sourceValue)) {
@@ -683,7 +706,7 @@ function resultsToList(sourceValue, sourceLabel, GOlabel1, UP1, targetValue, tar
 	if (sourceValue != null || sourceValue != "" || targetValue != null || targetValue != "") {
 	    elementsList.push({data: { id: sourceValue + targetValue, source: sourceValue, target: targetValue,
 			    sourceLabel: sourceLabel, targetLabel: targetLabel, interaction: interaction, 
-			    interactionType: type, strength: strength, color: edgeColor}});
+			    interactionType: type, strength: strength, quality: quality, color: edgeColor}});
 	}
 }
 
@@ -726,6 +749,7 @@ function readJson(jsonFile) {
 				targetLabel = bindings[i].proteinLabel2.value;
 				UP1 = bindings[i].UP1.value;
 				UP2 = bindings[i].UP2.value;
+				quality = bindings[i].quality.value;
 				
 				if (bindings[i].GOlabel1 != undefined) {
 					GOlabel1 = bindings[i].GOlabel1.value;
@@ -739,7 +763,7 @@ function readJson(jsonFile) {
 					GOlabel2 = "";
 				}
 				
-				resultsToList(sourceValue, sourceLabel, GOlabel1, UP1, targetValue, targetLabel, GOlabel2, UP2, interaction, type, strength);
+				resultsToList(sourceValue, sourceLabel, GOlabel1, UP1, targetValue, targetLabel, GOlabel2, UP2, interaction, type, strength, quality);
 			}
 			drawNetwork();
 		});
@@ -839,7 +863,8 @@ function readJson(jsonFile) {
 		var sideBar = document.getElementById('sidebar');
         sideBar.innerHTML = "Interaction between " + edge.data("sourceLabel") + " and " + edge.data("targetLabel")
 		    + "<br>Number of experiments to support the existence of this interaction: " + edge.data("strength")
-		    + "<br>Type of this interaction: " + edge.data("interactionType");
+		    + "<br>Type of this interaction: " + edge.data("interactionType")
+			+ "<br>Quality of the interaction: " + edge.data("quality");
     });
 
 }
